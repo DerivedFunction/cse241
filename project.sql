@@ -27,7 +27,7 @@ CREATE TABLE product(
   price		      numeric(5,2) DEFAULT 0,
   PRIMARY KEY (product_id, supplier_id),
   FOREIGN KEY (supplier_id) 
-    REFERENCES supplier
+    REFERENCES supplier(supplier_id)
     ON DELETE CASCADE
 );
 
@@ -42,16 +42,13 @@ CREATE TABLE shipment(
   product_id    number(5),   
   quantity      int DEFAULT 0 CHECK (quantity >= 0),
   unit_price    numeric(5,2) DEFAULT 0,
-  ship_date     datetime NOT NULL,
-  PRIMARY KEY (shipment_id, store_id, supplier_id, product_id),
-  FOREIGN KEY (product_id)
-    REFERENCES product
+  ship_date     timestamp NOT NULL,
+  PRIMARY KEY (shipment_id),
+  FOREIGN KEY (product_id, supplier_id)
+    REFERENCES product(product_id, supplier_id)
     ON DELETE CASCADE,
   FOREIGN KEY (store_id)
-    REFERENCES store
-    ON DELETE CASCADE,
-  FOREIGN KEY (supplier_id)
-    REFERENCES supplier
+    REFERENCES store(store_id)
     ON DELETE CASCADE
 );
 
@@ -61,19 +58,15 @@ CREATE TABLE shipment(
 CREATE TABLE manufacturing(
   product_id  number(5),
   supplier_id number(5),
-  supplier_name varchar(20),
   component   varchar(20),
   PRIMARY KEY(product_id, supplier_id, component),
-  FOREIGN KEY (product_id)
-    REFERENCES product
-    ON DELETE CASCADE,
-  FOREIGN KEY (supplier_id)
-    REFERENCES supplier
+  FOREIGN KEY (product_id, supplier_id)
+    REFERENCES product(product_id, supplier_id)
     ON DELETE CASCADE
 ); 
 
-CREATE ROLE manager;
-GRANT ALL ON store, supplier, product, shipment, manufacturing TO manager;
+-- CREATE ROLE manager;
+-- GRANT ALL ON store, supplier, product, shipment, manufacturing TO manager;
 -- CREATE OR REPLACE FUNCTION grant_select_to_supplier()
 -- RETURNS void AS $$
 -- DECLARE
@@ -89,3 +82,5 @@ GRANT ALL ON store, supplier, product, shipment, manufacturing TO manager;
 -- $$ LANGUAGE plpgsql;
 
 -- SELECT grant_select_to_supplier();
+SELECT * FROM store;
+INSERT INTO store(location) VALUES ('ABC')
