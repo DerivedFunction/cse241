@@ -20,6 +20,7 @@ public class App {
     db = Database.getDatabase(dbid, port, path, userid, passwd, table);
     if (db == null) {
       System.out.println("Failed to connect to database");
+      scanner.close();
       return;
     }
     userMenu();
@@ -44,6 +45,7 @@ public class App {
           break;
         case '3':
         case 'e':
+          scanner.close();
           System.exit(0);
           break;
         case '4':
