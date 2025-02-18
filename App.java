@@ -26,15 +26,14 @@ public class App {
   }
 
   static void userMenu() {
-    System.out.println("Welcome to the database!");
+    System.out.println("-------------------------");
     System.out.println("[1] I am a store [M]anager");
     System.out.println("[2] I am a [S]upplier");
     System.out.println("[3] [E]xit");
     System.out.println("[4] Generate random data");
-    System.out.print("> ");
     try {
-      char[] choice = getChoice();
-      switch (choice[0]) {
+
+      switch (getChoice()) {
         case '1':
         case 'm':
           managerMenu();
@@ -77,23 +76,21 @@ public class App {
   }
 
   static void managerMenu() {
-    System.out.println("Welcome to the store manager menu!");
+    System.out.println("-------------------------");
     System.out.println("[1] View/Manage my store [L]ocations");
     System.out.println("[2] View [S]uppliers");
     System.out.println("[3] View [P]roducts");
     System.out.println("[4] View/Manage my S[h]ipments");
     System.out.println("[5] [R]eturn to main menu");
-    System.out.print("> ");
     try {
-      char[] choice = getChoice();
-      switch (choice[0]) {
+      switch (getChoice()) {
         case '1':
         case 'l':
           manageStoreLocations();
           break;
         case '2':
         case 's':
-          viewSuppliers(null);
+          getSupplierData();
           break;
         case '3':
         case 'p':
@@ -117,9 +114,54 @@ public class App {
     managerMenu();
   }
 
-  private static char[] getChoice() {
-    char[] choice = scanner.nextLine().toLowerCase().toCharArray();
-    return choice;
+  private static void getSupplierData() {
+    System.out.println("-------------------------");
+    System.out.println("[1] Get [A]ll suppliers");
+    System.out.println("[2] Get suppliers by [I]d");
+    System.out.println("[3] Get suppliers by [N]ame");
+    System.out.println("[4] Get suppliers by [L]ocation");
+
+    ArrayList<SupplierData> suppliers = new ArrayList<>();
+    switch (getChoice()) {
+      case '1':
+      case 'a':
+        suppliers = db.getAllSuppliers();
+        break;
+      case '2':
+      case 'i':
+        System.out.println("Enter supplier id");
+        int id = getInt();
+        suppliers.add(db.getSupplierById(id));
+        break;
+      case '3':
+      case 'n':
+        System.out.println("Enter supplier name");
+        String name = getString();
+        suppliers = db.getSupplierbyName(name);
+        break;
+      case '4':
+      case 'l':
+        System.out.println("Enter supplier location");
+        String location = getString();
+        suppliers = db.getSupplierByLocation(location);
+        break;
+      default:
+        System.out.println("Invalid choice");
+        getSupplierData();
+        break;
+    }
+    if (suppliers.size() > 0) {
+      printSuppliers(suppliers);
+    }
+  }
+
+  private static char getChoice() {
+    System.out.print("> ");
+    if (scanner.hasNext()) {
+      char[] choice = scanner.nextLine().toLowerCase().toCharArray();
+      return choice[0];
+    }
+    return '\0';
   }
 
   private static void viewShipments(String input) {
@@ -132,20 +174,6 @@ public class App {
     System.out.println("Unimplemented method 'viewProducts'");
   }
 
-  private static void viewSuppliers(String input) {
-    if (input == null) {
-      System.out.println("Viewing all suppliers");
-      ArrayList<SupplierData> suppliers = new ArrayList<>();
-      suppliers = db.getAllSuppliers();
-      for (SupplierData supplier : suppliers) {
-        System.out.println(supplier);
-      }
-    } else {
-      // TODO Auto-generated method stub
-      System.out.println("Unimplemented method 'viewSuppliers'");
-    }
-  }
-
   private static void manageStoreLocations() {
     System.out.println("-------------------------");
     System.out.println("[1] View store locations");
@@ -153,13 +181,13 @@ public class App {
     System.out.println("[3] Remove store location");
     System.out.println("[4] Update store location");
     System.out.println("[5] Return to main menu");
-    System.out.print("> ");
     try {
-      char[] choice = getChoice();
-      switch (choice[0]) {
+
+      switch (getChoice()) {
         case '1': {
           ArrayList<StoreData> stores = new ArrayList<>();
-          System.out.println("Select store id/location to view. Enter -1 to view all stores: ");
+          System.out.println("Select store id/location to view. Enter -1 to view all stores.");
+          System.out.print("> ");
           // Check if input is an int or string
           if (scanner.hasNextInt()) {
             int storeId = scanner.nextInt();
@@ -167,7 +195,8 @@ public class App {
               stores = db.getAllStores();
               printStores(stores);
             } else {
-              System.out.println(db.getStoreById(storeId));
+              stores.add(db.getStoreById(storeId));
+              printStores(stores);
             }
           } else {
             String location = scanner.nextLine();
@@ -176,20 +205,23 @@ public class App {
           }
         }
           break;
-        case '2':
-          db.addStore(null);
+        case '2': {
+          System.out.println("Enter store location: ");
+          String location = getString();
+          db.addStore(location);
+        }
           break;
         case '3': {
-          System.out.print("Enter store id: ");
-          char[] store_id = getChoice();
-          db.deleteStoreById(Integer.parseInt(store_id.toString()));
+          System.out.println("Enter store id: ");
+          int store_id = getInt();
+          db.deleteStoreById(store_id);
         }
           break;
         case '4': {
-          System.out.print("Enter store id: ");
-          int store_id = Integer.parseInt(getChoice().toString());
-          System.out.print("Enter location: ");
-          String location = getChoice().toString();
+          System.out.println("Enter store id:");
+          int store_id = getInt();
+          System.out.println("Enter location:");
+          String location = getString();
           db.updateStoreLocation(store_id, location);
         }
           break;
@@ -206,6 +238,20 @@ public class App {
     manageStoreLocations();
   }
 
+  private static String getString() {
+    String input = scanner.nextLine();
+    while (input == null || input.trim().isEmpty()) {
+      input = scanner.nextLine();
+    }
+    return input;
+  }
+
+  private static int getInt() {
+    if (scanner.hasNextInt())
+      return scanner.nextInt();
+    return -1;
+  }
+
   private static void printStores(ArrayList<StoreData> stores) {
     String format = "%-5s %-20s";
     System.out.println(String.format(format, "ID", "Location"));
@@ -214,20 +260,26 @@ public class App {
     }
   }
 
+  private static void printSuppliers(ArrayList<SupplierData> suppliers) {
+    String format = "%-5s %-20s %-20s";
+    System.out.println(String.format(format, "ID", "Name", "Location"));
+    for (SupplierData supplier : suppliers) {
+      System.out.println(String.format(format, supplier.supplier_id, supplier.supplier_name, supplier.location));
+    }
+  }
+
   static void supplierMenu() {
-    System.out.println("Welcome to the supplier menu!");
+    System.out.println("-------------------------");
     System.out.println("[1] View/Manage my [L]ocations");
     System.out.println("[2] View/Manage my [P]roduct");
     System.out.println("[3] View/Manage my [S]hipments");
     System.out.println("[4] View/Manage/Recall my [M]anufacturing components");
     System.out.println("[5] [R]eturn to main menu");
-    System.out.print("> ");
     try {
-      char[] choice = getChoice();
-      switch (choice[0]) {
+
+      switch (getChoice()) {
         case '1':
         case 'l':
-          viewSuppliers(null);
           break;
         case '2':
         case 'p':

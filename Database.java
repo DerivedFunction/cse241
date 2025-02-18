@@ -19,6 +19,7 @@ public class Database {
   private PreparedStatement selectAllSuppliers;
   private PreparedStatement selectSupplierById;
   private PreparedStatement selectSupplierByLocation;
+  private PreparedStatement selectSupplierbyName;
   private PreparedStatement addSupplier;
   private PreparedStatement removeSupplierById;
 
@@ -111,7 +112,7 @@ public class Database {
       // CRUD operations for store
       db.selectAllStores = db.dbConnection.prepareStatement("SELECT * FROM " + store);
       db.selectStoreById = db.dbConnection.prepareStatement("SELECT * FROM " + store + " WHERE store_id = ?");
-      db.selectStorebyLocation = db.dbConnection.prepareStatement("SELECT * FROM " + store + " WHERE location = ?");
+      db.selectStorebyLocation = db.dbConnection.prepareStatement("SELECT * FROM " + store + " WHERE location LIKE ?");
       db.addStore = db.dbConnection.prepareStatement("INSERT INTO " + store + "(location) VALUES (?)");
       db.removeStorebyId = db.dbConnection.prepareStatement("DELETE FROM " + store + " WHERE store_id = ?");
       db.updateStorebyId = db.dbConnection.prepareStatement("UPDATE " + store + " SET location = ? WHERE store_id = ?");
@@ -119,7 +120,9 @@ public class Database {
       db.selectAllSuppliers = db.dbConnection.prepareStatement("SELECT * FROM " + supplier);
       db.selectSupplierById = db.dbConnection.prepareStatement("SELECT * FROM " + supplier + " WHERE supplier_id = ?");
       db.selectSupplierByLocation = db.dbConnection
-          .prepareStatement("SELECT * FROM " + supplier + " WHERE location = ?");
+          .prepareStatement("SELECT * FROM " + supplier + " WHERE location LIKE ?");
+      db.selectSupplierbyName = db.dbConnection
+          .prepareStatement("SELECT * FROM " + supplier + " WHERE supplier_name LIKE ?");
       db.addSupplier = db.dbConnection
           .prepareStatement("INSERT INTO " + supplier + "(supplier_name, location) VALUES (?, ?)");
       db.removeSupplierById = db.dbConnection.prepareStatement("DELETE FROM " + supplier + " WHERE supplier_id = ?");
@@ -214,7 +217,7 @@ public class Database {
   ArrayList<StoreData> getStoreByLocation(String location) {
     ArrayList<StoreData> result = new ArrayList<>();
     try {
-      selectStorebyLocation.setString(1, location);
+      selectStorebyLocation.setString(1, "%" + location + "%");
       ResultSet rs = selectStorebyLocation.executeQuery();
       while (rs.next()) {
         Integer store_id = rs.getInt("store_id");
@@ -338,7 +341,7 @@ public class Database {
   ArrayList<SupplierData> getSupplierByLocation(String location) {
     ArrayList<SupplierData> result = new ArrayList<>();
     try {
-      selectSupplierByLocation.setString(1, location);
+      selectSupplierByLocation.setString(1, "%" + location + "%");
       ResultSet rs = selectSupplierByLocation.executeQuery();
       while (rs.next()) {
         Integer supplier_id = rs.getInt("supplier_id");
@@ -348,6 +351,29 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all suppliers: " + location);
+      e.printStackTrace();
+    }
+    return result;
+  }
+
+  /**
+   * Get suppliers by name
+   * 
+   * @return An ArrayList of all suppliers
+   */
+  ArrayList<SupplierData> getSupplierbyName(String name) {
+    ArrayList<SupplierData> result = new ArrayList<>();
+    try {
+      selectSupplierbyName.setString(1, "%" + name + "%");
+      ResultSet rs = selectSupplierbyName.executeQuery();
+      while (rs.next()) {
+        Integer supplier_id = rs.getInt("supplier_id");
+        String supplier_name = rs.getString("supplier_name");
+        String loc = rs.getString("location");
+        result.add(new SupplierData(supplier_id, supplier_name, loc));
+      }
+    } catch (SQLException e) {
+      Log.error("SQL Exception: Cannot get all suppliers: " + name);
       e.printStackTrace();
     }
     return result;
