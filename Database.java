@@ -22,6 +22,7 @@ public class Database {
   private PreparedStatement selectSupplierbyName;
   private PreparedStatement addSupplier;
   private PreparedStatement removeSupplierById;
+  private PreparedStatement updateSupplierbyId;
 
   private Database() {
   }
@@ -110,22 +111,32 @@ public class Database {
     String manufacturing = dbTable.get(4);
     try {
       // CRUD operations for store
-      db.selectAllStores = db.dbConnection.prepareStatement("SELECT * FROM " + store);
-      db.selectStoreById = db.dbConnection.prepareStatement("SELECT * FROM " + store + " WHERE store_id = ?");
-      db.selectStorebyLocation = db.dbConnection.prepareStatement("SELECT * FROM " + store + " WHERE location LIKE ?");
-      db.addStore = db.dbConnection.prepareStatement("INSERT INTO " + store + "(location) VALUES (?)");
-      db.removeStorebyId = db.dbConnection.prepareStatement("DELETE FROM " + store + " WHERE store_id = ?");
-      db.updateStorebyId = db.dbConnection.prepareStatement("UPDATE " + store + " SET location = ? WHERE store_id = ?");
+      db.selectAllStores = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$s ORDER BY %1$s_id", store));
+      db.selectStoreById = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_id = ?", store));
+      db.selectStorebyLocation = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$s WHERE location LIKE ? ORDER BY %1$s_id", store));
+      db.addStore = db.dbConnection.prepareStatement(String.format("INSERT INTO %1$s (location) VALUES (?)", store));
+      db.removeStorebyId = db.dbConnection
+          .prepareStatement(String.format("DELETE FROM %1$s WHERE %1$s_id = ?", store));
+      db.updateStorebyId = db.dbConnection
+          .prepareStatement(String.format("UPDATE %1$s SET location = ? WHERE %1$s_id = ?", store));
       // CRUD operations for supplier
-      db.selectAllSuppliers = db.dbConnection.prepareStatement("SELECT * FROM " + supplier);
-      db.selectSupplierById = db.dbConnection.prepareStatement("SELECT * FROM " + supplier + " WHERE supplier_id = ?");
+      db.selectAllSuppliers = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$s ORDER BY %1$s_id", supplier));
+      db.selectSupplierById = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_id = ?", supplier));
       db.selectSupplierByLocation = db.dbConnection
-          .prepareStatement("SELECT * FROM " + supplier + " WHERE location LIKE ?");
+          .prepareStatement(String.format("SELECT * FROM %1$s WHERE location LIKE ? ORDER BY %1$s_id", supplier));
       db.selectSupplierbyName = db.dbConnection
-          .prepareStatement("SELECT * FROM " + supplier + " WHERE supplier_name LIKE ?");
+          .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_name LIKE ? ORDER BY %1$s_id", supplier));
       db.addSupplier = db.dbConnection
-          .prepareStatement("INSERT INTO " + supplier + "(supplier_name, location) VALUES (?, ?)");
-      db.removeSupplierById = db.dbConnection.prepareStatement("DELETE FROM " + supplier + " WHERE supplier_id = ?");
+          .prepareStatement(String.format("INSERT INTO %1$s (%1$s_name, location) VALUES (?, ?)", supplier));
+      db.removeSupplierById = db.dbConnection
+          .prepareStatement(String.format("DELETE FROM %1$s WHERE %1$s_id = ?", supplier));
+      db.updateSupplierbyId = db.dbConnection.prepareStatement(
+          String.format("UPDATE %1$s SET %1$s_name = ?, location = ? WHERE %1$s_id = ?", supplier));
       // CRUD operations for product
 
       // CRUD operations for shipment
@@ -277,7 +288,7 @@ public class Database {
     try {
       updateStorebyId.setString(1, location);
       updateStorebyId.setInt(2, store_id);
-      count = removeStorebyId.executeUpdate();
+      count = updateStorebyId.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot update store " + store_id + ": " + location);
       e.printStackTrace();
@@ -320,7 +331,7 @@ public class Database {
     try {
       selectSupplierById.setInt(1, id);
       ResultSet rs = selectSupplierById.executeQuery();
-      while (rs.next()) {
+      if (rs.next()) {
         Integer supplier_id = rs.getInt(1);
         String supplier_name = rs.getString(2);
         String location = rs.getString(3);
@@ -392,6 +403,46 @@ public class Database {
       count = addSupplier.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot add supplier");
+      e.printStackTrace();
+    }
+    return count;
+  }
+
+  /**
+   * Removes a supplier by id
+   * 
+   * @return 1 if successful, -1 if not
+   */
+  int removeSupplierById(int id) {
+    int count = -1;
+    try {
+      removeSupplierById.setInt(1, id);
+      count = removeSupplierById.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Invalid SQL Exception: Cannot add supplier");
+      e.printStackTrace();
+    }
+    return count;
+  }
+
+  /**
+   * Update supplier based on supplier_id
+   * 
+   * @param supplier_id   store id
+   * @param supplier_name name
+   * @param location      new location
+   * @return number of rows updated (1 on success)
+   */
+  int updateSupplier(int supplier_id, String supplier_name, String location) {
+    int count = -1;
+    try {
+      updateSupplierbyId.setInt(3, supplier_id);
+      updateSupplierbyId.setString(1, supplier_name);
+      updateSupplierbyId.setString(2, location);
+
+      count = updateSupplierbyId.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Invalid SQL Exception: Cannot update supplier " + supplier_id + ": " + location);
       e.printStackTrace();
     }
     return count;

@@ -31,22 +31,24 @@ public class App {
     System.out.println("[1] I am a store [M]anager");
     System.out.println("[2] I am a [S]upplier");
     System.out.println("[3] [E]xit");
-    System.out.println("[4] Generate random data");
     try {
 
-      switch (getChoice()) {
+      switch (getChar()) {
         case '1':
         case 'm':
           managerMenu();
           break;
         case '2':
         case 's':
-          supplierMenu();
+          System.out.println("Enter supplier name:");
+          String supplier_name = getString();
+          supplierMenu(supplier_name);
           break;
         case '3':
         case 'e':
           scanner.close();
-          System.exit(0);
+          db.disconnect();
+          exitMenu();
           break;
         case '4':
           generateData();
@@ -57,24 +59,44 @@ public class App {
       }
     } catch (Exception e) {
       System.out.println("Exception: Invalid choice");
+      userMenu();
     }
-    userMenu();
+  }
+
+  private static void exitMenu() {
+    System.out.println("Database disconnected.");
+    System.out.println("Press Ctrl+C to close");
+    // A workaround to some issues with System.exit(0) repeating main() for no
+    // reason
+    while (true) {
+      ;
+    }
   }
 
   private static void generateData() {
-    System.out.println("Generating random data...");
-    for (int i = 0; i < 20; i++) {
-      // Generate a random store, supplier location
-      // Generate a random length for string
-      java.security.SecureRandom secureRandom = new java.security.SecureRandom();
-      Integer randomLength = secureRandom.nextInt(10) + 10;
-      String location = UUID.randomUUID().toString().substring(0, randomLength);
-      String supplier_name = UUID.randomUUID().toString().substring(0, randomLength);
-      db.addStore(location);
-      db.addStore(location);
-      db.addSupplier(supplier_name, location);
-      db.addSupplier(supplier_name, location);
+    System.out.println("Create a new supplier. Enter supplier name (or !random): ");
+    String name = getString();
+    String location;
+    if (name.equals("!random")) {
+      for (int i = 0; i < 20; i++) {
+        Log.info("Generating random data...");
+        // Generate a random store, supplier location
+        // Generate a random length for string
+        java.security.SecureRandom secureRandom = new java.security.SecureRandom();
+        Integer randomLength = secureRandom.nextInt(10) + 10;
+        location = UUID.randomUUID().toString().substring(0, randomLength);
+        String supplier_name = UUID.randomUUID().toString().substring(0, randomLength);
+        db.addStore(location);
+        db.addStore(location);
+        db.addSupplier(supplier_name, location);
+        db.addSupplier(supplier_name, location);
+      }
+    } else {
+      System.out.println("Enter location:");
+      location = getString();
+      db.addSupplier(name, location);
     }
+    userMenu();
   }
 
   static void managerMenu() {
@@ -83,9 +105,9 @@ public class App {
     System.out.println("[2] View [S]uppliers");
     System.out.println("[3] View [P]roducts");
     System.out.println("[4] View/Manage my S[h]ipments");
-    System.out.println("[5] [R]eturn to main menu");
+    System.out.println("[5] Return to [M]ain menu");
     try {
-      switch (getChoice()) {
+      switch (getChar()) {
         case '1':
         case 'l':
           manageStoreLocations();
@@ -96,14 +118,14 @@ public class App {
           break;
         case '3':
         case 'p':
-          viewProducts(null);
+          viewProducts();
           break;
         case '4':
         case 'h':
           viewShipments(null);
           break;
         case '5':
-        case 'r':
+        case 'm':
           userMenu();
           break;
         default:
@@ -119,45 +141,43 @@ public class App {
   private static void getSupplierData() {
     System.out.println("-------------------------");
     System.out.println("[1] Get [A]ll suppliers");
-    System.out.println("[2] Get suppliers by [I]d");
+    System.out.println("[2] Get supplier by [I]d");
     System.out.println("[3] Get suppliers by [N]ame");
     System.out.println("[4] Get suppliers by [L]ocation");
 
-    ArrayList<SupplierData> suppliers = new ArrayList<>();
-    switch (getChoice()) {
+    switch (getChar()) {
       case '1':
       case 'a':
-        suppliers = db.getAllSuppliers();
+        viewSuppliers(0, null, null);
         break;
       case '2':
-      case 'i':
+      case 'i': {
         System.out.println("Enter supplier id");
         int id = getInt();
-        suppliers.add(db.getSupplierById(id));
+        viewSuppliers(id, null, null);
+      }
         break;
       case '3':
-      case 'n':
+      case 'n': {
         System.out.println("Enter supplier name");
         String name = getString();
-        suppliers = db.getSupplierbyName(name);
+        viewSuppliers(0, name, null);
+      }
         break;
       case '4':
       case 'l':
         System.out.println("Enter supplier location");
         String location = getString();
-        suppliers = db.getSupplierByLocation(location);
+        viewSuppliers(0, null, location);
         break;
       default:
         System.out.println("Invalid choice");
         getSupplierData();
         break;
     }
-    if (suppliers.size() > 0) {
-      printSuppliers(suppliers);
-    }
   }
 
-  private static char getChoice() {
+  private static char getChar() {
     System.out.print("> ");
     if (scanner.hasNext()) {
       char[] choice = scanner.nextLine().toLowerCase().toCharArray();
@@ -171,28 +191,28 @@ public class App {
     System.out.println("Unimplemented method 'viewShipments'");
   }
 
-  private static void viewProducts(String input) {
-    // TODO Auto-generated method stub
-    System.out.println("Unimplemented method 'viewProducts'");
+  private static void viewProducts() {
+
   }
 
   private static void manageStoreLocations() {
     System.out.println("-------------------------");
-    System.out.println("[1] View store locations");
-    System.out.println("[2] Add store location");
-    System.out.println("[3] Remove store location");
-    System.out.println("[4] Update store location");
-    System.out.println("[5] Return to main menu");
+    System.out.println("[1] View store [L]ocations");
+    System.out.println("[2] [A]dd store location");
+    System.out.println("[3] [R]emove store location");
+    System.out.println("[4] [U]pdate store location");
+    System.out.println("[5] Return to [m]ain menu");
     try {
 
-      switch (getChoice()) {
-        case '1': {
+      switch (getChar()) {
+        case '1':
+        case 'l': {
           ArrayList<StoreData> stores = new ArrayList<>();
           System.out.println("Select store id/location to view. Enter -1 to view all stores.");
           System.out.print("> ");
           // Check if input is an int or string
           if (scanner.hasNextInt()) {
-            int storeId = scanner.nextInt();
+            int storeId = getInt();
             if (storeId == -1) {
               stores = db.getAllStores();
               printStores(stores);
@@ -201,25 +221,28 @@ public class App {
               printStores(stores);
             }
           } else {
-            String location = scanner.nextLine();
+            String location = getString();
             stores = db.getStoreByLocation(location);
             printStores(stores);
           }
         }
           break;
-        case '2': {
+        case '2':
+        case 'a': {
           System.out.println("Enter store location: ");
           String location = getString();
           db.addStore(location);
         }
           break;
-        case '3': {
+        case '3':
+        case 'r': {
           System.out.println("Enter store id: ");
           int store_id = getInt();
           db.deleteStoreById(store_id);
         }
           break;
-        case '4': {
+        case '4':
+        case 'u': {
           System.out.println("Enter store id:");
           int store_id = getInt();
           System.out.println("Enter location:");
@@ -228,16 +251,19 @@ public class App {
         }
           break;
         case '5':
+        case 'm':
           userMenu();
           break;
         default:
           System.out.println("Invalid choice");
-          manageStoreLocations();
+          break;
       }
     } catch (Exception e) {
       System.out.println("Exception: Invalid choice");
+    } finally {
+      manageStoreLocations();
     }
-    manageStoreLocations();
+
   }
 
   private static String getString() {
@@ -249,8 +275,11 @@ public class App {
   }
 
   private static int getInt() {
-    if (scanner.hasNextInt())
-      return scanner.nextInt();
+    if (scanner.hasNextInt()) {
+      int x = scanner.nextInt();
+      scanner.nextLine();
+      return x;
+    }
     return -1;
   }
 
@@ -270,43 +299,111 @@ public class App {
     }
   }
 
-  static void supplierMenu() {
+  static void supplierMenu(String supplier_name) {
     System.out.println("-------------------------");
     System.out.println("[1] View/Manage my [L]ocations");
-    System.out.println("[2] View/Manage my [P]roduct");
+    System.out.println("[2] View/Manage my [P]roducts");
     System.out.println("[3] View/Manage my [S]hipments");
-    System.out.println("[4] View/Manage/Recall my [M]anufacturing components");
-    System.out.println("[5] [R]eturn to main menu");
+    System.out.println("[4] View/Manage/Recall my Manufacturing [C]omponents");
+    System.out.println("[5] Return to [M]ain menu");
     try {
 
-      switch (getChoice()) {
+      switch (getChar()) {
         case '1':
         case 'l':
+          manageSupplier(supplier_name);
           break;
         case '2':
         case 'p':
-          viewProducts(null);
+          viewProducts();
           break;
         case '3':
         case 's':
           viewShipments(null);
           break;
         case '4':
-        case 'm':
+        case 'c':
           viewComponents(null);
           break;
         case '5':
-        case 'r':
+        case 'm':
           userMenu();
           break;
         default:
           System.out.println("Invalid choice");
-          supplierMenu();
+          supplierMenu(supplier_name);
       }
     } catch (Exception e) {
       System.out.println("Exeption: Invalid choice");
     }
-    supplierMenu();
+    supplierMenu(supplier_name);
+  }
+
+  private static void manageSupplier(String supplier_name) {
+    System.out.println("-------------------------");
+    System.out.println("[1] View my [L]ocations");
+    System.out.println("[2] [A]dd a new Location");
+    System.out.println("[3] [R]emove a Location");
+    System.out.println("[4] [U]pdate a Location");
+    System.out.println("[5] Return to [M]ain Menu");
+    try {
+      switch (getChar()) {
+        case '1':
+        case 'l':
+          viewSuppliers(0, supplier_name, null);
+          break;
+        case '2':
+        case 'a': {
+          System.out.println(String.format("Enter a new location for supplier[%s]:", supplier_name));
+          String location = getString();
+          db.addSupplier(supplier_name, location);
+        }
+          break;
+        case '3':
+        case 'r': {
+          System.out.println(String.format("Enter supplier_id to remove for supplier[%s]:", supplier_name));
+          int id = getInt();
+          db.removeSupplierById(id);
+        }
+          break;
+        case '4':
+        case 'u': {
+          System.out.println(String.format("Enter supplier_id to update for supplier[%s]:", supplier_name));
+          int id = getInt();
+          SupplierData supplier = db.getSupplierById(id);
+          if (supplier != null && supplier.supplier_name.contains(supplier_name)) {
+            System.out.println("Current location: " + supplier.location);
+            System.out.println("Enter new location: ");
+            String location = getString();
+            db.updateSupplier(id, supplier.supplier_name, location);
+          }
+        }
+          break;
+        case '5':
+        case 'm':
+          userMenu();
+          break;
+        default:
+          System.out.println("Invalid choice");
+          break;
+      }
+    } catch (Exception e) {
+      System.out.println("Exception: Invalid choice");
+    }
+  }
+
+  private static void viewSuppliers(int supplier_id, String supplier_name, String location) {
+    ArrayList<SupplierData> suppliers = new ArrayList<>();
+    if (supplier_name != null)
+      suppliers = db.getSupplierbyName(supplier_name);
+    else if (location != null)
+      suppliers = db.getSupplierByLocation(location);
+    else if (supplier_id > 0)
+      suppliers.add(db.getSupplierById(supplier_id));
+    else if (location == null && supplier_name == null)
+      suppliers = db.getAllSuppliers();
+    if (suppliers.size() > 0)
+      printSuppliers(suppliers);
   }
 
   private static void viewComponents(String object) {

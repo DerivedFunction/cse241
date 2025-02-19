@@ -83,4 +83,11 @@ CREATE TABLE manufacturing(
 
 -- SELECT grant_select_to_supplier();
 SELECT * FROM store;
-INSERT INTO store(location) VALUES ('ABC')
+INSERT INTO store(location) VALUES ('ABC');
+SELECT * FROM supplier WHERE supplier_name LIKE '%Denny%';
+UPDATE supplier SET supplier_name = 'Denny', location='Allentown' WHERE supplier_id=41;
+SELECT * FROM supplier WHERE supplier_name LIKE '%Denny%';
+INSERT INTO supplier(supplier_name, location) VALUES ('Denny', '10000');
+INSERT INTO supplier(supplier_name, location) VALUES ('Denny', '20000');
+INSERT INTO supplier(supplier_name, location) VALUES ('Denny Li', '3000');
+SELECT * FROM supplier ORDER BY supplier_id DESC;
