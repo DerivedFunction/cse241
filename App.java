@@ -7,7 +7,7 @@ public class App {
   static Database db;
 
   public static void main(String[] args) {
-
+    Log.info("Logging enabled");
     System.out.print("Enter your username: ");
     String userid = scanner.next();
     System.out.print("Enter your password: ");
@@ -187,8 +187,7 @@ public class App {
   }
 
   private static void viewShipments(String input) {
-    // TODO Auto-generated method stub
-    System.out.println("Unimplemented method 'viewShipments'");
+
   }
 
   private static void viewProducts() {

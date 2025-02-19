@@ -84,7 +84,7 @@ public class Database {
       db.dbConnection = conn;
     } catch (SQLException e) {
       Log.error("Error: DriverManager.getConnection() threw a SQLException");
-      e.printStackTrace();
+
       return null;
     }
     return createPreparedStatements(db, table);
@@ -145,7 +145,7 @@ public class Database {
 
     } catch (SQLException e) {
       Log.error("Error creating prepared statement");
-      e.printStackTrace();
+
       db.disconnect();
       return null;
     }
@@ -166,7 +166,7 @@ public class Database {
       dbConnection.close();
     } catch (SQLException e) {
       Log.error("Error: Connection.close() threw a SQLException");
-      e.printStackTrace();
+
       dbConnection = null;
       return false;
     }
@@ -190,7 +190,7 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all stores");
-      e.printStackTrace();
+
     }
     return result;
   }
@@ -215,7 +215,7 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: store not found: " + id);
-      e.printStackTrace();
+
     }
     return result;
   }
@@ -237,7 +237,7 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all stores: " + location);
-      e.printStackTrace();
+
     }
     return result;
   }
@@ -254,7 +254,7 @@ public class Database {
       count = addStore.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot add store");
-      e.printStackTrace();
+
     }
     return count;
   }
@@ -271,7 +271,7 @@ public class Database {
       count = removeStorebyId.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot remove store: " + id);
-      e.printStackTrace();
+
     }
     return count;
   }
@@ -291,7 +291,7 @@ public class Database {
       count = updateStorebyId.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot update store " + store_id + ": " + location);
-      e.printStackTrace();
+
     }
     return count;
   }
@@ -313,7 +313,7 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all suppliers");
-      e.printStackTrace();
+
     }
     return result;
   }
@@ -339,7 +339,7 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: supplier not found: " + id);
-      e.printStackTrace();
+
     }
     return result;
   }
@@ -362,7 +362,7 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all suppliers: " + location);
-      e.printStackTrace();
+
     }
     return result;
   }
@@ -385,7 +385,7 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all suppliers: " + name);
-      e.printStackTrace();
+
     }
     return result;
   }
@@ -403,7 +403,7 @@ public class Database {
       count = addSupplier.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot add supplier");
-      e.printStackTrace();
+
     }
     return count;
   }
@@ -420,7 +420,7 @@ public class Database {
       count = removeSupplierById.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot add supplier");
-      e.printStackTrace();
+
     }
     return count;
   }
@@ -443,7 +443,7 @@ public class Database {
       count = updateSupplierbyId.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot update supplier " + supplier_id + ": " + location);
-      e.printStackTrace();
+
     }
     return count;
   }

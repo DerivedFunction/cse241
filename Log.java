@@ -14,8 +14,7 @@ public class Log {
   /**
    * env variable on whether or not to enable logging messages
    */
-  private static final boolean ENABLED =
-      Boolean.parseBoolean(System.getenv("logging"));
+  private static final boolean ENABLED = Boolean.parseBoolean(System.getenv("logging"));
 
   /**
    * Logs an informational message.
