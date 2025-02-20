@@ -35,6 +35,10 @@ public class Database {
   private PreparedStatement updateProduct;
   private PreparedStatement removeProduct;
 
+  private PreparedStatement addBuilding;
+  private PreparedStatement updateBuilding;
+  private PreparedStatement removeBuilding;
+
   private Database() {
   }
 
@@ -120,7 +124,16 @@ public class Database {
     String product = dbTable.get(2);
     String shipment = dbTable.get(3);
     String manufacturing = dbTable.get(4);
+    String building = dbTable.get(5);
     try {
+
+      // CRUD operations for building
+      db.addBuilding = db.dbConnection
+          .prepareStatement(String.format("INSERT INTO %1$s (location) VALUES (?)", building));
+      db.removeBuilding = db.dbConnection
+          .prepareStatement(String.format("DELETE FROM %1$s WHERE id = ?", building));
+      db.updateBuilding = db.dbConnection
+          .prepareStatement(String.format("UPDATE %1$s SET location = ? WHERE id = ?", building));
       // CRUD operations for store
       db.selectAllStores = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$s ORDER BY %1$s_id", store));
@@ -129,10 +142,9 @@ public class Database {
       db.selectStorebyLocation = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$s WHERE location LIKE ? ORDER BY %1$s_id", store));
       db.addStore = db.dbConnection.prepareStatement(String.format("INSERT INTO %1$s (location) VALUES (?)", store));
-      db.removeStorebyId = db.dbConnection
-          .prepareStatement(String.format("DELETE FROM %1$s WHERE %1$s_id = ?", store));
-      db.updateStorebyId = db.dbConnection
-          .prepareStatement(String.format("UPDATE %1$s SET location = ? WHERE %1$s_id = ?", store));
+      db.removeStorebyId = db.removeBuilding; // We can just remove the id in building to cascade and remove it in store
+      db.updateStorebyId = db.updateBuilding;// We can just update it in building
+
       // CRUD operations for supplier
       db.selectAllSuppliers = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$s ORDER BY %1$s_id", supplier));

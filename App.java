@@ -416,9 +416,10 @@ public class App {
     ArrayList<String> table = new ArrayList<>();
     table.add("store");
     table.add("supplier");
-    table.add("productview");
+    table.add("product");
     table.add("shipment");
     table.add("manufacturing");
+    table.add("building");
     return table;
   }
 }
