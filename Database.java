@@ -129,7 +129,8 @@ public class Database {
 
       // CRUD operations for building
       db.addBuilding = db.dbConnection
-          .prepareStatement(String.format("INSERT INTO %1$s (location) VALUES (?)", building));
+          .prepareStatement(String.format("INSERT INTO %1$s (location) VALUES (?)", building),
+              new String[] { "id" });
       db.removeBuilding = db.dbConnection
           .prepareStatement(String.format("DELETE FROM %1$s WHERE id = ?", building));
       db.updateBuilding = db.dbConnection
@@ -141,7 +142,7 @@ public class Database {
           .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_id = ?", store));
       db.selectStorebyLocation = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$s WHERE location LIKE ? ORDER BY %1$s_id", store));
-      db.addStore = db.dbConnection.prepareStatement(String.format("INSERT INTO %1$s (location) VALUES (?)", store));
+      db.addStore = db.dbConnection.prepareStatement(String.format("INSERT INTO %1$sb (store_id) VALUES (?)", store));
       db.removeStorebyId = db.removeBuilding; // We can just remove the id in building to cascade and remove it in store
       db.updateStorebyId = db.updateBuilding;// We can just update it in building
 
@@ -155,9 +156,10 @@ public class Database {
       db.selectSupplierbyName = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_name LIKE ? ORDER BY %1$s_id", supplier));
       db.addSupplier = db.dbConnection
-          .prepareStatement(String.format("INSERT INTO %1$s (%1$s_name, location) VALUES (?, ?)", supplier));
-      db.removeSupplierById = db.dbConnection
-          .prepareStatement(String.format("DELETE FROM %1$s WHERE %1$s_id = ?", supplier));
+          .prepareStatement(
+              String.format("INSERT INTO %1$s (%1$s_id, %1$s_name) VALUES (?, ?)", supplier));
+      db.removeSupplierById = db.removeBuilding; // We can just remove the id in building to cascade and remove it in
+                                                 // supplier
       db.updateSupplierbyId = db.dbConnection.prepareStatement(
           String.format("UPDATE %1$s SET %1$s_name = ?, location = ? WHERE %1$s_id = ?", supplier));
 
@@ -289,18 +291,42 @@ public class Database {
   /**
    * Adds a new store by location
    * 
-   * @return 1 if successful, -1 if not
+   * @return store id
    */
   int addStore(String location) {
-    int count = -1;
+    int store_id = -1;
     try {
-      addStore.setString(1, location);
-      count = addStore.executeUpdate();
+      store_id = addBuilding(location);
+      addStore.setInt(1, store_id);
+      addStore.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot add store");
 
     }
-    return count;
+    Log.info("Got store id: " + store_id);
+    return store_id;
+  }
+
+  /**
+   * Adds a new building by location
+   * 
+   * @return the building id.
+   */
+  int addBuilding(String location) {
+    int id = -1;
+    try {
+      addBuilding.setString(1, location);
+      int affectedRows = addBuilding.executeUpdate();
+      if (affectedRows > 0) {
+        ResultSet generatedKeys = addBuilding.getGeneratedKeys();
+        if (generatedKeys.next()) {
+          id = generatedKeys.getInt(1);
+        }
+      }
+    } catch (SQLException e) {
+      Log.error("Invalid SQL Exception: Cannot add building");
+    }
+    return id;
   }
 
   /**
@@ -437,19 +463,20 @@ public class Database {
   /**
    * Adds a new supplier by name and location
    * 
-   * @return 1 if successful, -1 if not
+   * @return supplier_id
    */
   int addSupplier(String name, String location) {
-    int count = -1;
+    int supplier_id = -1;
     try {
-      addSupplier.setString(1, name);
-      addSupplier.setString(2, location);
-      count = addSupplier.executeUpdate();
+      supplier_id = addBuilding(location);
+      addSupplier.setInt(1, supplier_id);
+      addSupplier.setString(2, name);
+      addSupplier.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot add supplier");
-
     }
-    return count;
+    Log.info("Adding supplier: " + supplier_id);
+    return supplier_id;
   }
 
   /**
@@ -463,7 +490,7 @@ public class Database {
       removeSupplierById.setInt(1, id);
       count = removeSupplierById.executeUpdate();
     } catch (SQLException e) {
-      Log.error("Invalid SQL Exception: Cannot add supplier");
+      Log.error("Invalid SQL Exception: Cannot remove supplier");
 
     }
     return count;

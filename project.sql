@@ -121,3 +121,4 @@ DROP TABLE supplier;
 DROP TABLE manufacturing;
 DROP TABLE shipment;
 DROP TABLE building;
+SELECT * FROM building;
