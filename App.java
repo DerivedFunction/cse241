@@ -118,7 +118,7 @@ public class App {
           break;
         case '3':
         case 'p':
-          viewProducts();
+          viewProducts(null);
           break;
         case '4':
         case 'h':
@@ -190,8 +190,10 @@ public class App {
 
   }
 
-  private static void viewProducts() {
+  private static void viewProducts(String supplier_name) {
+    if (supplier_name == null) {
 
+    }
   }
 
   private static void manageStoreLocations() {
@@ -314,7 +316,7 @@ public class App {
           break;
         case '2':
         case 'p':
-          viewProducts();
+          viewProducts(supplier_name);
           break;
         case '3':
         case 's':
@@ -414,7 +416,7 @@ public class App {
     ArrayList<String> table = new ArrayList<>();
     table.add("store");
     table.add("supplier");
-    table.add("product");
+    table.add("productview");
     table.add("shipment");
     table.add("manufacturing");
     return table;

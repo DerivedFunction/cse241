@@ -24,6 +24,17 @@ public class Database {
   private PreparedStatement removeSupplierById;
   private PreparedStatement updateSupplierbyId;
 
+  private PreparedStatement selectAllProducts;
+  private PreparedStatement selectAllProductsById;
+  private PreparedStatement selectAllProductsByStore;
+  private PreparedStatement selectAllProductsBySupplierName;
+  private PreparedStatement selectAllProductsByName;
+  private PreparedStatement selectOneProduct;
+
+  private PreparedStatement addProduct;
+  private PreparedStatement updateProduct;
+  private PreparedStatement removeProduct;
+
   private Database() {
   }
 
@@ -137,8 +148,29 @@ public class Database {
           .prepareStatement(String.format("DELETE FROM %1$s WHERE %1$s_id = ?", supplier));
       db.updateSupplierbyId = db.dbConnection.prepareStatement(
           String.format("UPDATE %1$s SET %1$s_name = ?, location = ? WHERE %1$s_id = ?", supplier));
-      // CRUD operations for product
 
+      // CRUD operations for product
+      db.selectAllProducts = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$sview", product));
+      db.selectAllProductsById = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$sview WHERE %1$s_id = ?", product));
+      db.selectAllProductsByStore = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$sview WHERE %2$s_id = ?", product, store));
+      db.selectAllProductsBySupplierName = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$sview WHERE %2$s_name LIKE ?", product, supplier));
+      db.selectAllProductsByName = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$sview WHERE %1$s_name LIKE ?", product));
+      db.selectOneProduct = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$sview WHERE %1$s_id = ? AND %2$s_id = ?", product, supplier));
+      db.addProduct = db.dbConnection
+          .prepareStatement(String.format("INSERT INTO %1$s (%1$s_id, %1$s_name, price, %2$s_id) VALUES (?,?,?,?)",
+              product, supplier));
+      db.updateProduct = db.dbConnection
+          .prepareStatement(String.format("UPDATE %1$s SET %1$s_name = ?, price = ? WHERE %1$s_id = ? AND %2$s_id = ?",
+              product, supplier));
+      db.removeProduct = db.dbConnection
+          .prepareStatement(String.format("DELETE FROM %1$s WHERE %1$s_id = ? AND %2$s_id = ?", product, supplier));
       // CRUD operations for shipment
 
       // CRUD operations for manufacturing

@@ -65,29 +65,20 @@ CREATE TABLE manufacturing(
     ON DELETE CASCADE
 ); 
 
--- CREATE ROLE manager;
--- GRANT ALL ON store, supplier, product, shipment, manufacturing TO manager;
--- CREATE OR REPLACE FUNCTION grant_select_to_supplier()
--- RETURNS void AS $$
--- DECLARE
---   supplier_rec RECORD;
--- BEGIN
---   FOR supplier_rec IN SELECT supplier_id, name FROM supplier LOOP
---     EXECUTE format('GRANT SELECT ON supplier TO %I', supplier_rec.name);
---     EXECUTE format('GRANT SELECT ON product TO %I WHERE supplier_id = %L', supplier_rec.name, supplier_rec.supplier_id);
---     EXECUTE format('GRANT SELECT ON shipment TO %I WHERE supplier_id = %L', supplier_rec.name, supplier_rec.supplier_id);
---     EXECUTE format('GRANT SELECT ON manufacturing TO %I WHERE supplier_id = %L', supplier_rec.name, supplier_rec.supplier_id);
---   END LOOP;
--- END;
--- $$ LANGUAGE plpgsql;
+CREATE VIEW productView AS
+SELECT *
+FROM product p
+INNER JOIN supplier s ON p.supplier_id = s.supplier_id
 
--- SELECT grant_select_to_supplier();
-SELECT * FROM store;
-INSERT INTO store(location) VALUES ('ABC');
-SELECT * FROM supplier WHERE supplier_name LIKE '%Denny%';
-UPDATE supplier SET supplier_name = 'Denny', location='Allentown' WHERE supplier_id=41;
-SELECT * FROM supplier WHERE supplier_name LIKE '%Denny%';
-INSERT INTO supplier(supplier_name, location) VALUES ('Denny', '10000');
-INSERT INTO supplier(supplier_name, location) VALUES ('Denny', '20000');
-INSERT INTO supplier(supplier_name, location) VALUES ('Denny Li', '3000');
-SELECT * FROM supplier ORDER BY supplier_id DESC;
+CREATE VIEW shipmentView AS
+SELECT *
+FROM shipment t
+INNER JOIN product p ON t.product_id = p.product_id AND t.supplier_id = p.supplier_id
+INNER JOIN supplier s ON t.supplier_id = s.supplier_id
+INNER JOIN store r ON t.store_id = r.store_id;
+
+CREATE VIEW material AS
+SELECT *
+FROM manufacturing m
+INNER JOIN product p ON m.product_id = p.product_id AND m.supplier_id = p.supplier_id
+INNER JOIN supplier s ON m.supplier_id = s.supplier_id;
