@@ -13,31 +13,35 @@ public class Database {
   private PreparedStatement selectStoreById;
   private PreparedStatement selectStorebyLocation;
   private PreparedStatement addStore;
-  private PreparedStatement removeStorebyId;
+  private PreparedStatement deleteStorebyId;
   private PreparedStatement updateStorebyId;
 
   private PreparedStatement selectAllSuppliers;
   private PreparedStatement selectSupplierById;
-  private PreparedStatement selectSupplierByLocation;
-  private PreparedStatement selectSupplierbyName;
+  private PreparedStatement selectSupplierByLocationName;
   private PreparedStatement addSupplier;
-  private PreparedStatement removeSupplierById;
+  private PreparedStatement deleteSupplierById;
   private PreparedStatement updateSupplierbyId;
 
   private PreparedStatement selectAllProducts;
-  private PreparedStatement selectAllProductsById;
-  private PreparedStatement selectAllProductsByStore;
-  private PreparedStatement selectAllProductsBySupplierName;
-  private PreparedStatement selectAllProductsByName;
+  private PreparedStatement selectAllProductsLog;
+  private PreparedStatement selectProductLogByName;
+  private PreparedStatement selectOneSimpleProduct;
+
+  private PreparedStatement selectAllProductsByNames;
+  private PreparedStatement selectAllProductsByProductId;
+  private PreparedStatement selectAllProductsBySupplierId;
+
   private PreparedStatement selectOneProduct;
 
-  private PreparedStatement addProduct;
+  private PreparedStatement addProductLog;
+  private PreparedStatement addProductFromSupplier;
   private PreparedStatement updateProduct;
-  private PreparedStatement removeProduct;
+  private PreparedStatement deleteProduct;
 
   private PreparedStatement addBuilding;
   private PreparedStatement updateBuilding;
-  private PreparedStatement removeBuilding;
+  private PreparedStatement deleteBuilding;
 
   private Database() {
   }
@@ -126,12 +130,11 @@ public class Database {
     String manufacturing = dbTable.get(4);
     String building = dbTable.get(5);
     try {
-
       // CRUD operations for building
       db.addBuilding = db.dbConnection
           .prepareStatement(String.format("INSERT INTO %1$s (location) VALUES (?)", building),
               new String[] { "id" });
-      db.removeBuilding = db.dbConnection
+      db.deleteBuilding = db.dbConnection
           .prepareStatement(String.format("DELETE FROM %1$s WHERE id = ?", building));
       db.updateBuilding = db.dbConnection
           .prepareStatement(String.format("UPDATE %1$s SET location = ? WHERE id = ?", building));
@@ -141,50 +144,66 @@ public class Database {
       db.selectStoreById = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_id = ?", store));
       db.selectStorebyLocation = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$s WHERE location LIKE ? ORDER BY %1$s_id", store));
-      db.addStore = db.dbConnection.prepareStatement(String.format("INSERT INTO %1$sb (store_id) VALUES (?)", store));
-      db.removeStorebyId = db.removeBuilding; // We can just remove the id in building to cascade and remove it in store
-      db.updateStorebyId = db.updateBuilding;// We can just update it in building
+          .prepareStatement(String.format("SELECT * FROM %1$s WHERE location LIKE ? ORDER BY location", store));
+      db.addStore = db.dbConnection.prepareStatement(String.format("INSERT INTO %1$sb (%1$s_id) VALUES (?)", store));
+      db.deleteStorebyId = db.deleteBuilding; // We can just remove the id in building to cascade and remove it in store
+      db.updateStorebyId = db.updateBuilding; // We can just update it in building
 
       // CRUD operations for supplier
       db.selectAllSuppliers = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$s ORDER BY %1$s_id", supplier));
       db.selectSupplierById = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_id = ?", supplier));
-      db.selectSupplierByLocation = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$s WHERE location LIKE ? ORDER BY %1$s_id", supplier));
-      db.selectSupplierbyName = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_name LIKE ? ORDER BY %1$s_id", supplier));
+      db.selectSupplierByLocationName = db.dbConnection
+          .prepareStatement(String
+              .format("SELECT * FROM %1$s WHERE location LIKE ? AND %1$s_name LIKE ? ORDER BY %1$s_name, location",
+                  supplier));
       db.addSupplier = db.dbConnection
           .prepareStatement(
-              String.format("INSERT INTO %1$s (%1$s_id, %1$s_name) VALUES (?, ?)", supplier));
-      db.removeSupplierById = db.removeBuilding; // We can just remove the id in building to cascade and remove it in
-                                                 // supplier
-      db.updateSupplierbyId = db.dbConnection.prepareStatement(
-          String.format("UPDATE %1$s SET %1$s_name = ?, location = ? WHERE %1$s_id = ?", supplier));
-
+              String.format("INSERT INTO %1$sb (%1$s_id, %1$s_name) VALUES (?, ?)", supplier));
+      // We can just remove the id in building to cascade and remove it in supplier
+      db.deleteSupplierById = db.deleteBuilding;
+      db.updateSupplierbyId = db.dbConnection
+          .prepareStatement(String.format("UPDATE %1$s SET %1$s_name = ? WHERE %1$s_id = ?", supplier));
       // CRUD operations for product
       db.selectAllProducts = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$sview", product));
-      db.selectAllProductsById = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$sview WHERE %1$s_id = ?", product));
-      db.selectAllProductsByStore = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$sview WHERE %2$s_id = ?", product, store));
-      db.selectAllProductsBySupplierName = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$sview WHERE %2$s_name LIKE ?", product, supplier));
-      db.selectAllProductsByName = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$sview WHERE %1$s_name LIKE ?", product));
+          .prepareStatement(String.format("SELECT * FROM %1$s", product));
+      db.selectAllProductsByNames = db.dbConnection
+          .prepareStatement(
+              String.format(
+                  "SELECT * FROM %1$s WHERE %1$s_name LIKE ? AND %2$s_name LIKE ? ORDER BY %1$s_name, %2$s_name",
+                  product, supplier));
+      db.selectAllProductsByProductId = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$s WHERE %1$s_id = ? AND %2$s_name LIKE ? ORDER BY %1$s_id, %2$s_id",
+                  product, supplier));
+      db.selectAllProductsBySupplierId = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$s WHERE %2$s_id = ? ORDER BY %1$s_id, %2$s_id",
+                  product, supplier));
+
+      db.selectAllProductsLog = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$slog", product));
+      db.selectProductLogByName = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$slog WHERE %1$s_name LIKE ?", product));
+      db.selectOneSimpleProduct = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$slog WHERE %1$s_id = ?", product));
+
       db.selectOneProduct = db.dbConnection
           .prepareStatement(
-              String.format("SELECT * FROM %1$sview WHERE %1$s_id = ? AND %2$s_id = ?", product, supplier));
-      db.addProduct = db.dbConnection
-          .prepareStatement(String.format("INSERT INTO %1$s (%1$s_id, %1$s_name, price, %2$s_id) VALUES (?,?,?,?)",
+              String.format("SELECT * FROM %1$s WHERE %1$s_id = ? AND %2$s_id = ?", product, supplier));
+      db.addProductLog = db.dbConnection
+          .prepareStatement(String.format("INSERT INTO %1$slog (%1$s_name) VALUES (?)",
+              product), new String[] { "product_id" });
+      db.addProductFromSupplier = db.dbConnection
+          .prepareStatement(String.format("INSERT INTO %1$sb (%1$s_id, %2$s_id, price, unit_type) VALUES (?,?,?,?)",
               product, supplier));
       db.updateProduct = db.dbConnection
-          .prepareStatement(String.format("UPDATE %1$s SET %1$s_name = ?, price = ? WHERE %1$s_id = ? AND %2$s_id = ?",
+          .prepareStatement(String.format("UPDATE %1$s SET price = ?, unit_type = ? WHERE %1$s_id = ? AND %2$s_id = ?",
               product, supplier));
-      db.removeProduct = db.dbConnection
-          .prepareStatement(String.format("DELETE FROM %1$s WHERE %1$s_id = ? AND %2$s_id = ?", product, supplier));
+      db.deleteProduct = db.dbConnection
+          .prepareStatement(
+              String.format("DELETE FROM %1$s WHERE %1$s_id = ? AND %2$s_id = ?", product, supplier));
       // CRUD operations for shipment
 
       // CRUD operations for manufacturing
@@ -230,9 +249,7 @@ public class Database {
     try {
       ResultSet rs = selectAllStores.executeQuery();
       while (rs.next()) {
-        Integer store_id = rs.getInt("store_id");
-        String location = rs.getString("location");
-        result.add(new StoreData(store_id, location));
+        result.add(getStore(rs));
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all stores");
@@ -255,9 +272,7 @@ public class Database {
       selectStoreById.setInt(1, id);
       ResultSet rs = selectStoreById.executeQuery();
       while (rs.next()) {
-        Integer store_id = rs.getInt(1);
-        String location = rs.getString(2);
-        result = new StoreData(store_id, location);
+        result = getStore(rs);
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: store not found: " + id);
@@ -274,18 +289,27 @@ public class Database {
   ArrayList<StoreData> getStoreByLocation(String location) {
     ArrayList<StoreData> result = new ArrayList<>();
     try {
-      selectStorebyLocation.setString(1, "%" + location + "%");
+      selectStorebyLocation.setString(1, adjustWildcards(location));
       ResultSet rs = selectStorebyLocation.executeQuery();
       while (rs.next()) {
-        Integer store_id = rs.getInt("store_id");
-        String loc = rs.getString("location");
-        result.add(new StoreData(store_id, loc));
+        result.add(getStore(rs));
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all stores: " + location);
 
     }
     return result;
+  }
+
+  private StoreData getStore(ResultSet rs) {
+    try {
+      Integer store_id = rs.getInt("store_id");
+      String loc = rs.getString("location");
+      return new StoreData(store_id, loc);
+    } catch (SQLException e) {
+      Log.error("Cannot get store");
+    }
+    return null;
   }
 
   /**
@@ -308,39 +332,17 @@ public class Database {
   }
 
   /**
-   * Adds a new building by location
-   * 
-   * @return the building id.
-   */
-  int addBuilding(String location) {
-    int id = -1;
-    try {
-      addBuilding.setString(1, location);
-      int affectedRows = addBuilding.executeUpdate();
-      if (affectedRows > 0) {
-        ResultSet generatedKeys = addBuilding.getGeneratedKeys();
-        if (generatedKeys.next()) {
-          id = generatedKeys.getInt(1);
-        }
-      }
-    } catch (SQLException e) {
-      Log.error("Invalid SQL Exception: Cannot add building");
-    }
-    return id;
-  }
-
-  /**
    * Deletes a store by store-id
    * 
    * @return 1 if successful, -1 if not
    */
-  int deleteStoreById(int id) {
+  int deleteStoreById(int store_id) {
     int count = -1;
     try {
-      removeStorebyId.setInt(1, id);
-      count = removeStorebyId.executeUpdate();
+      deleteStorebyId.setInt(1, store_id);
+      count = deleteStorebyId.executeUpdate();
     } catch (SQLException e) {
-      Log.error("Invalid SQL Exception: Cannot remove store: " + id);
+      Log.error("Invalid SQL Exception: Cannot remove store: " + store_id);
 
     }
     return count;
@@ -367,6 +369,64 @@ public class Database {
   }
 
   /**
+   * Adds a new building by location
+   * 
+   * @return the building id.
+   */
+  int addBuilding(String location) {
+    int id = -1;
+    try {
+      addBuilding.setString(1, location);
+      int affectedRows = addBuilding.executeUpdate();
+      if (affectedRows > 0) {
+        ResultSet rs = addBuilding.getGeneratedKeys();
+        if (rs.next()) {
+          id = rs.getInt(1);
+        }
+      }
+    } catch (SQLException e) {
+      Log.error("Invalid SQL Exception: Cannot add building");
+    }
+    return id;
+  }
+
+  /**
+   * Deletes a building by id
+   * 
+   * @return 1 if successful, -1 if not
+   */
+  int deleteBuilding(int id) {
+    int count = -1;
+    try {
+      deleteBuilding.setInt(1, id);
+      count = deleteBuilding.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Invalid SQL Exception: Cannot remove building: " + id);
+    }
+    return count;
+  }
+
+  /**
+   * Update building's location based on id
+   * 
+   * @param id       store id
+   * @param location new location
+   * @return number of rows updated (1 on success)
+   */
+  int updateBuilding(int id, String location) {
+    int count = -1;
+    try {
+      updateBuilding.setString(1, location);
+      updateBuilding.setInt(2, id);
+      count = updateBuilding.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Invalid SQL Exception: Cannot update building " + id + ": " + location);
+
+    }
+    return count;
+  }
+
+  /**
    * Get all suppliers
    * 
    * @return An ArrayList of all suppliers
@@ -376,10 +436,8 @@ public class Database {
     try {
       ResultSet rs = selectAllSuppliers.executeQuery();
       while (rs.next()) {
-        Integer id = rs.getInt("supplier_id");
-        String name = rs.getString("supplier_name");
-        String location = rs.getString("location");
-        result.add(new SupplierData(id, name, location));
+
+        result.add(getSupplier(rs));
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all suppliers");
@@ -393,22 +451,19 @@ public class Database {
    * 
    * @return SupplierData object
    */
-  SupplierData getSupplierById(int id) {
+  SupplierData getSupplierById(int supplier_id) {
     SupplierData result = null;
-    if (id < 0) {
+    if (supplier_id < 0) {
       return null;
     }
     try {
-      selectSupplierById.setInt(1, id);
+      selectSupplierById.setInt(1, supplier_id);
       ResultSet rs = selectSupplierById.executeQuery();
       if (rs.next()) {
-        Integer supplier_id = rs.getInt(1);
-        String supplier_name = rs.getString(2);
-        String location = rs.getString(3);
-        result = new SupplierData(supplier_id, supplier_name, location);
+        result = getSupplier(rs);
       }
     } catch (SQLException e) {
-      Log.error("SQL Exception: supplier not found: " + id);
+      Log.error("SQL Exception: supplier not found: " + supplier_id);
 
     }
     return result;
@@ -419,16 +474,15 @@ public class Database {
    * 
    * @return An ArrayList of all suppliers
    */
-  ArrayList<SupplierData> getSupplierByLocation(String location) {
+  ArrayList<SupplierData> getSupplierByLocationAndName(String location, String supplier_name) {
     ArrayList<SupplierData> result = new ArrayList<>();
     try {
-      selectSupplierByLocation.setString(1, "%" + location + "%");
-      ResultSet rs = selectSupplierByLocation.executeQuery();
+      Log.info(adjustWildcards(supplier_name));
+      selectSupplierByLocationName.setString(1, adjustWildcards(location));
+      selectSupplierByLocationName.setString(2, adjustWildcards(supplier_name));
+      ResultSet rs = selectSupplierByLocationName.executeQuery();
       while (rs.next()) {
-        Integer supplier_id = rs.getInt("supplier_id");
-        String supplier_name = rs.getString("supplier_name");
-        String loc = rs.getString("location");
-        result.add(new SupplierData(supplier_id, supplier_name, loc));
+        result.add(getSupplier(rs));
       }
     } catch (SQLException e) {
       Log.error("SQL Exception: Cannot get all suppliers: " + location);
@@ -437,40 +491,39 @@ public class Database {
     return result;
   }
 
-  /**
-   * Get suppliers by name
-   * 
-   * @return An ArrayList of all suppliers
-   */
-  ArrayList<SupplierData> getSupplierbyName(String name) {
-    ArrayList<SupplierData> result = new ArrayList<>();
-    try {
-      selectSupplierbyName.setString(1, "%" + name + "%");
-      ResultSet rs = selectSupplierbyName.executeQuery();
-      while (rs.next()) {
-        Integer supplier_id = rs.getInt("supplier_id");
-        String supplier_name = rs.getString("supplier_name");
-        String loc = rs.getString("location");
-        result.add(new SupplierData(supplier_id, supplier_name, loc));
-      }
-    } catch (SQLException e) {
-      Log.error("SQL Exception: Cannot get all suppliers: " + name);
-
+  private String adjustWildcards(String string) {
+    if (string == null || string.isEmpty()) {
+      return "%";
     }
-    return result;
+    return "%" + string + "%";
+  }
+
+  private SupplierData getSupplier(ResultSet rs) {
+    Integer supplier_id;
+    try {
+      supplier_id = rs.getInt("supplier_id");
+      String supplier_name = rs.getString("supplier_name");
+      String loc = rs.getString("location");
+      return new SupplierData(supplier_id, supplier_name, loc);
+    } catch (SQLException e) {
+      Log.error("Cannot get supplier");
+    }
+    return null;
   }
 
   /**
    * Adds a new supplier by name and location
    * 
+   * @param supplier_name name
+   * @param location      location
    * @return supplier_id
    */
-  int addSupplier(String name, String location) {
+  int addSupplier(String supplier_name, String location) {
     int supplier_id = -1;
     try {
       supplier_id = addBuilding(location);
       addSupplier.setInt(1, supplier_id);
-      addSupplier.setString(2, name);
+      addSupplier.setString(2, supplier_name);
       addSupplier.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot add supplier");
@@ -482,13 +535,14 @@ public class Database {
   /**
    * Removes a supplier by id
    * 
+   * @param supplier_id supplier id
    * @return 1 if successful, -1 if not
    */
-  int removeSupplierById(int id) {
+  int removeSupplierById(int supplier_id) {
     int count = -1;
     try {
-      removeSupplierById.setInt(1, id);
-      count = removeSupplierById.executeUpdate();
+      deleteSupplierById.setInt(1, supplier_id);
+      count = deleteSupplierById.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot remove supplier");
 
@@ -507,14 +561,208 @@ public class Database {
   int updateSupplier(int supplier_id, String supplier_name, String location) {
     int count = -1;
     try {
-      updateSupplierbyId.setInt(3, supplier_id);
+      updateBuilding(supplier_id, location);
+      updateSupplierbyId.setInt(2, supplier_id);
       updateSupplierbyId.setString(1, supplier_name);
-      updateSupplierbyId.setString(2, location);
-
       count = updateSupplierbyId.executeUpdate();
     } catch (SQLException e) {
       Log.error("Invalid SQL Exception: Cannot update supplier " + supplier_id + ": " + location);
 
+    }
+    return count;
+  }
+
+  ArrayList<ProductData> getAllProducts() {
+    ArrayList<ProductData> products = new ArrayList<>();
+    try {
+      ResultSet rs = selectAllProducts.executeQuery();
+      while (rs.next()) {
+        products.add(getProduct(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all products");
+    }
+    return products;
+  }
+
+  ArrayList<ProductData> getAllProductsSimple() {
+    ArrayList<ProductData> products = new ArrayList<>();
+    try {
+      ResultSet rs = selectAllProductsLog.executeQuery();
+      while (rs.next()) {
+        products.add(getProductSimple(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all products");
+    }
+    return products;
+  }
+
+  ArrayList<ProductData> getProductLog(int product_id, String product_name) {
+    ArrayList<ProductData> products = new ArrayList<>();
+    try {
+      ResultSet rs;
+      // Only product_id is given
+      if (product_id > 0 && product_name == null) {
+        selectOneSimpleProduct.setInt(1, product_id);
+        rs = selectOneSimpleProduct.executeQuery();
+      } else if (product_id < 0 && product_name != null) { // Only product_name is given
+        selectProductLogByName.setString(1, adjustWildcards(product_name));
+        rs = selectProductLogByName.executeQuery();
+      } else { // Get the entire log
+        rs = selectAllProductsLog.executeQuery();
+      }
+      while (rs.next()) {
+        products.add(getProductSimple(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all products");
+    }
+    return products;
+  }
+
+  private ProductData getProduct(ResultSet rs) {
+    try {
+      int supplier_id = rs.getInt("supplier_id");
+      String supplier_name = rs.getString("supplier_name");
+      SupplierData supplier = new SupplierData(supplier_id, supplier_name, "");
+      String product_name = rs.getString("product_name");
+      int product_id = rs.getInt("product_id");
+      float price = rs.getFloat("price");
+      String unit = rs.getString("unit_type");
+      Log.info(new ProductData(supplier, product_id, product_name, price, unit).toString());
+      return new ProductData(supplier, product_id, product_name, price, unit);
+    } catch (SQLException e) {
+      Log.error("Cannot get product");
+    }
+    return null;
+  }
+
+  private ProductData getProductSimple(ResultSet rs) {
+    try {
+      String product_name = rs.getString("product_name");
+      int product_id = rs.getInt("product_id");
+      return new ProductData(null, product_id, product_name, 0, null);
+    } catch (SQLException e) {
+      Log.error("Cannot get product");
+    }
+    return null;
+  }
+
+  ArrayList<ProductData> getProductByName(String product_name, String supplier_name) {
+    ArrayList<ProductData> products = new ArrayList<>();
+    try {
+      selectAllProductsByNames.setString(1, adjustWildcards(product_name));
+      selectAllProductsByNames.setString(2, adjustWildcards(supplier_name));
+      ResultSet rs = selectAllProductsByNames.executeQuery();
+      while (rs.next()) {
+        products.add(getProduct(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all products with name: " + product_name);
+    }
+    return products;
+  }
+
+  ArrayList<ProductData> getProductByProductId(int product_id, String supplier_name) {
+    ArrayList<ProductData> products = new ArrayList<>();
+    try {
+      selectAllProductsByProductId.setInt(1, product_id);
+      selectAllProductsByProductId.setString(2, adjustWildcards(supplier_name));
+      ResultSet rs = selectAllProductsByProductId.executeQuery();
+      while (rs.next()) {
+        products.add(getProduct(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all products with id: " + product_id);
+    }
+    return products;
+  }
+
+  ArrayList<ProductData> getProductBySupplierId(int supplier_id) {
+    ArrayList<ProductData> products = new ArrayList<>();
+    try {
+      selectAllProductsBySupplierId.setInt(1, supplier_id);
+      ResultSet rs = selectAllProductsBySupplierId.executeQuery();
+      while (rs.next()) {
+        products.add(getProduct(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all products with id: " + supplier_id);
+    }
+    return products;
+  }
+
+  ProductData getOneProduct(int product_id, int supplier_id) {
+    try {
+      selectOneProduct.setInt(1, product_id);
+      selectOneProduct.setInt(2, supplier_id);
+      ResultSet rs = selectOneProduct.executeQuery();
+      if (rs.next()) {
+        return getProduct(rs);
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all products with id =" + product_id + "supplier = " + supplier_id);
+    }
+    return null;
+  }
+
+  int addProductFromSupplier(int product_id, int supplier_id, float price, String unit_type) {
+    int count = 0;
+    price = Math.round(price * 100) / 100;
+    try {
+      addProductFromSupplier.setInt(1, product_id);
+      addProductFromSupplier.setInt(2, supplier_id);
+      addProductFromSupplier.setFloat(3, price);
+      addProductFromSupplier.setString(4, unit_type);
+      count = addProductFromSupplier.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("cannot add product.");
+    }
+    return count;
+  }
+
+  int addProductLog(String product_name) {
+    int product_id = -1;
+    try {
+      addProductLog.setString(1, product_name);
+      int affectedRows = addProductLog.executeUpdate();
+      if (affectedRows > 0) {
+        ResultSet rs = addProductLog.getGeneratedKeys();
+        if (rs.next()) {
+          product_id = rs.getInt(1);
+        }
+      }
+
+    } catch (SQLException e) {
+      Log.error("cannot add product to log");
+    }
+    return product_id;
+  }
+
+  int deleteProduct(int product_id, int supplier_id) {
+    int count = -1;
+    try {
+      deleteProduct.setInt(1, product_id);
+      deleteProduct.setInt(1, supplier_id);
+      count = deleteProduct.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Invalid SQL Exception: Cannot remove product: " + product_id + "from supplier: " + supplier_id);
+
+    }
+    return count;
+  }
+
+  int updateProduct(int product_id, int supplier_id, float price, String unit_type) {
+    int count = -1;
+    try {
+      updateProduct.setFloat(1, price);
+      updateProduct.setString(2, unit_type);
+      updateProduct.setInt(3, product_id);
+      updateProduct.setInt(4, supplier_id);
+      count = updateProduct.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot update product");
     }
     return count;
   }

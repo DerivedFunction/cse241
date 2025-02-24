@@ -39,7 +39,7 @@ CREATE VIEW supplier AS(
 
 -- Each generic product has its own id.
 CREATE TABLE productlog (
-    product_id	  number(5),
+    product_id	  number(5) GENERATED ALWAYS AS IDENTITY,
     product_name  varchar(20) NOT NULL,
     PRIMARY KEY (product_id)
 );
@@ -47,7 +47,8 @@ CREATE TABLE productlog (
 -- Each supplier can have the same product, with its own 
 -- unit type and price
 -- We can identify the origin by its supplier
-CREATE TABLE product(
+-- NEED TO recreate table
+CREATE TABLE productb(
   product_id	  number(5),
   supplier_id	  number(5),
   price		      numeric(5,2) DEFAULT 0,
@@ -60,6 +61,13 @@ CREATE TABLE product(
     REFERENCES productlog
     ON DELETE CASCADE
 );
+
+CREATE VIEW product AS(
+  SELECT * FROM productb
+  NATURAL JOIN productlog
+  NATURAL JOIN supplierb
+);
+
 
 -- Each shipment have one supplier and to one location at certain time
 -- Each of those shipment is assigned a unique id
@@ -105,20 +113,40 @@ CREATE TABLE manufacturing(
   component   varchar(20),
   PRIMARY KEY(product_id, supplier_id, component),
   FOREIGN KEY (product_id, supplier_id)
-    REFERENCES product(product_id, supplier_id)
+    REFERENCES productb(product_id, supplier_id)
     ON DELETE CASCADE
 ); 
 
-DELETE FROM product;
-DELETE FROM store;
-DELETE FROM supplier;
+-- Drop existing views
+DROP VIEW store;
+DROP VIEW supplier;
+DROP VIEW product;
+DROP VIEW shipment;
+
+-- Delete existing tables
+DELETE FROM product_ship;
 DELETE FROM manufacturing;
-DELETE FROM shipment;
+DELETE FROM productb;
+DELETE FROM productlog;
+DELETE FROM shipmentLog;
+DELETE FROM supplierb;
+DELETE FROM storeb;
 DELETE FROM building;
+-- Drop existing tables
 DROP TABLE product_ship;
-DROP TABLE store;
-DROP TABLE supplier;
 DROP TABLE manufacturing;
-DROP TABLE shipment;
+DROP TABLE productb;
+DROP TABLE productlog;
+DROP TABLE shipmentLog;
+DROP TABLE supplierb;
+DROP TABLE storeb;
 DROP TABLE building;
+SELECT * FROM product;
+SELECT * FROM ALL_TABLES WHERE OWNER = 'DEL226';
+SELECT * FROM ALL_VIEWS WHERE OWNER = 'DEL226';
 SELECT * FROM building;
+SELECT * FROM supplier;
+SELECT * FROM supplier WHERE supplier_name LIKE '%Hello%' AND location like '%';
+SELECT * FROM productlog;
+SELECT * FROM product;
+INSERT INTO productlog (product_name) VALUES ('ABC');
