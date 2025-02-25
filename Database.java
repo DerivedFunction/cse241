@@ -67,7 +67,8 @@ public class Database {
 
   private PreparedStatement addManufacturing;
   private PreparedStatement updateManufacturing;
-  private PreparedStatement deleteManufacturing;
+  private PreparedStatement deleteManufacturingByComponent;
+  private PreparedStatement deleteManufacturingById;
 
   private Database() {
   }
@@ -309,13 +310,15 @@ public class Database {
           .prepareStatement(
               String.format("UPDATE %1$sb SET component = ? WHERE %1$s_id = ?",
                   manufacturing));
-      db.deleteManufacturing = db.dbConnection
+      db.deleteManufacturingByComponent = db.dbConnection
           .prepareStatement(String.format("DELETE FROM %1$sb WHERE %2$s_id = ? AND %3$s_id = ? AND component LIKE ?",
               manufacturing, product, supplier));
 
+      db.deleteManufacturingById = db.dbConnection
+          .prepareStatement(String.format("DELETE FROM %1$sb WHERE %1$s_id = ?", manufacturing));
+
     } catch (SQLException e) {
       Log.error("Error creating prepared statement");
-
       db.disconnect();
       return null;
     }
@@ -406,6 +409,12 @@ public class Database {
     return result;
   }
 
+  /**
+   * Get storeData from result set
+   * 
+   * @param rs result set
+   * @return StoreData
+   */
   private StoreData getStore(ResultSet rs) {
     try {
       Integer store_id = rs.getInt("store_id");
@@ -420,6 +429,7 @@ public class Database {
   /**
    * Adds a new store by location
    * 
+   * @param location location
    * @return store id
    */
   int addStore(String location) {
@@ -554,6 +564,7 @@ public class Database {
   /**
    * Get one supplier by id
    * 
+   * @param supplier_id id
    * @return SupplierData object
    */
   SupplierData getSupplierById(int supplier_id) {
@@ -575,8 +586,10 @@ public class Database {
   }
 
   /**
-   * Get suppliers by location
+   * Get suppliers by location and/or name
    * 
+   * @param location      location
+   * @param supplier_name name
    * @return An ArrayList of all suppliers
    */
   ArrayList<SupplierData> getSupplierByLocationAndName(String location, String supplier_name) {
@@ -596,6 +609,12 @@ public class Database {
     return result;
   }
 
+  /**
+   * Adjusts the wildcards for SQL queries
+   * 
+   * @param string string to adjust
+   * @return adjusted string
+   */
   private String adjustWildcards(String string) {
     if (isNull(string) || string.isEmpty()) {
       return "%";
@@ -603,6 +622,12 @@ public class Database {
     return "%" + string + "%";
   }
 
+  /**
+   * Get supplierData from result set
+   * 
+   * @param rs result set
+   * @return SupplierData
+   */
   private SupplierData getSupplier(ResultSet rs) {
     Integer supplier_id;
     try {
@@ -678,6 +703,11 @@ public class Database {
     return count;
   }
 
+  /**
+   * Get all products
+   * 
+   * @return An ArrayList of all products
+   */
   ArrayList<ProductData> getAllProducts() {
     ArrayList<ProductData> products = new ArrayList<>();
     try {
@@ -691,6 +721,11 @@ public class Database {
     return products;
   }
 
+  /**
+   * Get all products from log
+   * 
+   * @return An ArrayList of all products
+   */
   ArrayList<ProductData> getAllProductsSimple() {
     ArrayList<ProductData> products = new ArrayList<>();
     try {
@@ -704,6 +739,13 @@ public class Database {
     return products;
   }
 
+  /**
+   * Get all products from log
+   * 
+   * @param product_id   product id
+   * @param product_name product name
+   * @return An ArrayList of all products
+   */
   ArrayList<ProductData> getProductLog(int product_id, String product_name) {
     ArrayList<ProductData> products = new ArrayList<>();
     try {
@@ -727,6 +769,12 @@ public class Database {
     return products;
   }
 
+  /**
+   * Get productData from result set
+   * 
+   * @param rs result set
+   * @return ProductData
+   */
   private ProductData getProduct(ResultSet rs) {
     try {
       int supplier_id = rs.getInt("supplier_id");
@@ -744,6 +792,12 @@ public class Database {
     return null;
   }
 
+  /**
+   * Get productData from ProductLog from result set
+   * 
+   * @param rs result set
+   * @return ProductData
+   */
   private ProductData getProductFromLog(ResultSet rs) {
     try {
       String product_name = rs.getString("product_name");
@@ -755,6 +809,13 @@ public class Database {
     return null;
   }
 
+  /**
+   * Get all products by name
+   * 
+   * @param product_name  product name
+   * @param supplier_name supplier name
+   * @return An ArrayList of all products
+   */
   ArrayList<ProductData> getProductByName(String product_name, String supplier_name) {
     ArrayList<ProductData> products = new ArrayList<>();
     try {
@@ -770,6 +831,13 @@ public class Database {
     return products;
   }
 
+  /**
+   * Get all products by product id
+   * 
+   * @param product_id    product id
+   * @param supplier_name supplier name
+   * @return An ArrayList of all products
+   */
   ArrayList<ProductData> getProductByProductId(int product_id, String supplier_name) {
     ArrayList<ProductData> products = new ArrayList<>();
     try {
@@ -785,6 +853,12 @@ public class Database {
     return products;
   }
 
+  /**
+   * Get all products by supplier id
+   * 
+   * @param supplier_id supplier id
+   * @return An ArrayList of all products
+   */
   ArrayList<ProductData> getProductBySupplierId(int supplier_id) {
     ArrayList<ProductData> products = new ArrayList<>();
     try {
@@ -799,6 +873,13 @@ public class Database {
     return products;
   }
 
+  /**
+   * Get one product by product id and supplier id
+   * 
+   * @param product_id  product id
+   * @param supplier_id supplier id
+   * @return ProductData object
+   */
   ProductData getOneProduct(int product_id, int supplier_id) {
     try {
       selectOneProduct.setInt(1, product_id);
@@ -813,6 +894,12 @@ public class Database {
     return null;
   }
 
+  /**
+   * Adds a new product by name
+   * 
+   * @param product_name product name
+   * @return product_id
+   */
   int addProductFromSupplier(int product_id, int supplier_id, float price, String unit_type) {
     int count = 0;
     price = Math.round(price * 100) / 100;
@@ -829,6 +916,12 @@ public class Database {
     return count;
   }
 
+  /**
+   * Adds a new product by name
+   * 
+   * @param product_name product name
+   * @return product_id
+   */
   int addProductLog(String product_name) {
     int product_id = -1;
     try {
@@ -848,6 +941,13 @@ public class Database {
     return product_id;
   }
 
+  /**
+   * Deletes a product by product_id and supplier_id
+   * 
+   * @param product_id  product id
+   * @param supplier_id supplier id
+   * @return 1 if successful, -1 if not
+   */
   int deleteProduct(int product_id, int supplier_id) {
     int count = -1;
     try {
@@ -861,6 +961,15 @@ public class Database {
     return count;
   }
 
+  /**
+   * Update product based on product_id and supplier_id
+   * 
+   * @param product_id  product id
+   * @param supplier_id supplier id
+   * @param price       price
+   * @param unit_type   unit type
+   * @return number of rows updated (1 on success)
+   */
   int updateProduct(int product_id, int supplier_id, float price, String unit_type) {
     int count = -1;
     try {
@@ -875,6 +984,13 @@ public class Database {
     return count;
   }
 
+  /**
+   * Get all shipments
+   * 
+   * @param to_id         destination id
+   * @param supplier_name supplier name
+   * @return An ArrayList of all shipments
+   */
   ArrayList<ShipmentData> getShipmentsByDest(int to_id, String supplier_name) {
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
@@ -899,6 +1015,13 @@ public class Database {
     return shipments;
   }
 
+  /**
+   * Get all shipments by supplier
+   * 
+   * @param supplier_id   supplier id
+   * @param supplier_name supplier name
+   * @return An ArrayList of all shipments
+   */
   ArrayList<ShipmentData> getShipmentsBySupplier(int supplier_id, String supplier_name) {
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
@@ -923,10 +1046,22 @@ public class Database {
     return shipments;
   }
 
+  /**
+   * Check if a string is null or empty
+   * 
+   * @param string string to check
+   * @return true if null or empty
+   */
   private static boolean isNull(String string) {
     return string == null || string.isEmpty();
   }
 
+  /**
+   * Get all shipments by supplier
+   * 
+   * @param supplier_name supplier name
+   * @return An ArrayList of all shipments
+   */
   ArrayList<ShipmentData> getShipmentToSupplier(String supplier_name) {
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
@@ -941,6 +1076,11 @@ public class Database {
     return shipments;
   }
 
+  /**
+   * Get all shipments to the store
+   * 
+   * @return An ArrayList of all shipments
+   */
   ArrayList<ShipmentData> getShipmentToStore() {
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
@@ -954,6 +1094,14 @@ public class Database {
     return shipments;
   }
 
+  /**
+   * Add a new shipment log
+   * 
+   * @param to_id       destination id
+   * @param ship_date   ship date
+   * @param arrive_date arrive date
+   * @return shipment id
+   */
   int addShipmentLog(int to_id, String ship_date, String arrive_date) {
     int shipment_id = -1;
     try {
@@ -974,6 +1122,15 @@ public class Database {
     return shipment_id;
   }
 
+  /**
+   * Update a shipment log
+   * 
+   * @param shipment_id shipment id
+   * @param to_id       destination id
+   * @param ship_date   ship date
+   * @param arrive_date arrive date
+   * @return number of rows updated (1 on success)
+   */
   int updateShipmentLog(int shipment_id, int to_id, String ship_date, String arrive_date, int supplier_id) {
     int count = -1;
     try {
@@ -990,6 +1147,12 @@ public class Database {
     return count;
   }
 
+  /**
+   * Delete a shipment log
+   * 
+   * @param shipment_id shipment id
+   * @return number of rows deleted (1 on success)
+   */
   int deleteShipmentLog(int shipment_id) {
     int count = -1;
     try {
@@ -1001,6 +1164,12 @@ public class Database {
     return count;
   }
 
+  /**
+   * Get all products from shipment id
+   * 
+   * @param shipment_id shipment id
+   * @return An ArrayList of all shipments
+   */
   ArrayList<ShipmentData> getProductsFromShipmentId(int shipment_id) {
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
@@ -1015,6 +1184,15 @@ public class Database {
     return shipments;
   }
 
+  /**
+   * Add a product to a shipment
+   * 
+   * @param shipment_id shipment id
+   * @param product_id  product id
+   * @param supplier_id supplier id
+   * @param quantity    quantity
+   * @return number of rows added (1 on success)
+   */
   int addProductToShipment(int shipment_id, int product_id, int supplier_id, float quantity) {
     int count = 0;
     quantity = Math.round(quantity * 100) / 100;
@@ -1031,6 +1209,15 @@ public class Database {
     return count;
   }
 
+  /**
+   * Update a product in a shipment
+   * 
+   * @param shipment_id shipment id
+   * @param product_id  product id
+   * @param supplier_id supplier id
+   * @param quantity    quantity
+   * @return number of rows updated (1 on success)
+   */
   int deleteProductFromShipment(int shipment_id, int product_id, int supplier_id) {
     int count = 0;
     try {
@@ -1044,6 +1231,13 @@ public class Database {
     return count;
   }
 
+  /**
+   * Get shipmentData from result set
+   * All the products from that shipment
+   * 
+   * @param rs result set
+   * @return ShipmentData
+   */
   private ShipmentData getShipment(ResultSet rs) {
     try {
       int shipment_id = rs.getInt("shipment_id");
@@ -1066,6 +1260,12 @@ public class Database {
     return null;
   }
 
+  /**
+   * Get shipmentData from shipmentLog from result set
+   * 
+   * @param rs result set
+   * @return ShipmentData
+   */
   private ShipmentData getShipmentLog(ResultSet rs) {
     try {
       int shipment_id = rs.getInt("shipment_id");
@@ -1080,6 +1280,12 @@ public class Database {
     return null;
   }
 
+  /**
+   * Get all manufacturing
+   * 
+   * @param supplier_name supplier name
+   * @return An ArrayList of all manufacturing
+   */
   ArrayList<ManufacturingData> getManufacturingBySupplierName(String supplier_name) {
     ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
     try {
@@ -1094,6 +1300,12 @@ public class Database {
     return manufacturing;
   }
 
+  /**
+   * Get all manufacturing
+   * 
+   * @param supplier_id supplier id
+   * @return An ArrayList of all manufacturing
+   */
   ArrayList<ManufacturingData> getManufacturingBySupplierId(int supplier_id) {
     ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
     try {
@@ -1108,6 +1320,12 @@ public class Database {
     return manufacturing;
   }
 
+  /**
+   * Get all manufacturing
+   * 
+   * @param product_id product id
+   * @return An ArrayList of all manufacturing
+   */
   ArrayList<ManufacturingData> getManufacturingByProductId(int product_id) {
     ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
     try {
@@ -1122,6 +1340,12 @@ public class Database {
     return manufacturing;
   }
 
+  /**
+   * Get all manufacturing
+   * 
+   * @param product_name product name
+   * @return An ArrayList of all manufacturing
+   */
   ArrayList<ManufacturingData> getManufacturingByProductName(String product_name) {
     ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
     try {
@@ -1136,6 +1360,12 @@ public class Database {
     return manufacturing;
   }
 
+  /**
+   * Get all manufacturing
+   * 
+   * @param component component
+   * @return An ArrayList of all manufacturing
+   */
   ArrayList<ManufacturingData> getManufacturingByComponent(String component) {
     ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
     try {
@@ -1150,6 +1380,12 @@ public class Database {
     return manufacturing;
   }
 
+  /**
+   * Get one manufacturing by id
+   * 
+   * @param manufacturing_id id
+   * @return ManufacturingData object
+   */
   ManufacturingData getOneManufacturing(int manufacturing_id) {
     try {
       selectOneManufacturing.setInt(1, manufacturing_id);
@@ -1163,6 +1399,12 @@ public class Database {
     return null;
   }
 
+  /**
+   * Get manufacturingData from result set
+   * 
+   * @param rs result set
+   * @return ManufacturingData
+   */
   int addManufacturing(int product_id, int supplier_id, String component) {
     int count = 0;
     try {
@@ -1182,6 +1424,13 @@ public class Database {
     return count;
   }
 
+  /**
+   * Update manufacturingData from result set
+   * 
+   * @param manufacturing_id manufacturing id
+   * @param component        new component name
+   * @return
+   */
   int updateManufacturing(int manufacturing_id, String component) {
     int count = 0;
     try {
@@ -1194,19 +1443,50 @@ public class Database {
     return count;
   }
 
+  /**
+   * Delete manufacturing
+   * 
+   * @param product_id  product id
+   * @param supplier_id supplier id
+   * @param component   component name
+   * @return
+   */
   int deleteManufacturing(int product_id, int supplier_id, String component) {
     int count = 0;
     try {
-      deleteManufacturing.setInt(1, product_id);
-      deleteManufacturing.setInt(2, supplier_id);
-      deleteManufacturing.setString(3, adjustWildcards(component));
-      count = deleteManufacturing.executeUpdate();
+      deleteManufacturingByComponent.setInt(1, product_id);
+      deleteManufacturingByComponent.setInt(2, supplier_id);
+      deleteManufacturingByComponent.setString(3, adjustWildcards(component));
+      count = deleteManufacturingByComponent.executeUpdate();
     } catch (SQLException e) {
       Log.error("Cannot delete manufacturing");
     }
     return count;
   }
 
+  /**
+   * Delete manufacturing
+   * 
+   * @param manufacturing_id manufacturing id
+   * @return
+   */
+  int deleteManufacturing(int manufacturing_id) {
+    int count = 0;
+    try {
+      deleteManufacturingById.setInt(1, manufacturing_id);
+      count = deleteManufacturingById.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot delete manufacturing");
+    }
+    return count;
+  }
+
+  /**
+   * Get manufacturingData from result set
+   * 
+   * @param rs result set
+   * @return ManufacturingData
+   */
   private ManufacturingData getManufacturing(ResultSet rs) {
     try {
       int manufacturing_id = rs.getInt("manufacturing_id");

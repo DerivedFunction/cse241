@@ -1080,18 +1080,24 @@ public class App {
           break;
         case '4':
         case 'r': {
-          System.out.println("Enter supplier id:");
-          int supplier_id = getInt();
-          SupplierData supplier = db.getSupplierById(supplier_id);
-          if (checkSupplier(supplier_name, supplier)) {
-            System.out.println("Enter product id:");
-            int product_id = getInt();
-            System.out.println("Enter component (n/a to delete all components):");
-            String component = getString();
-            if (component.equals("n/a")) {
-              component = "";
+          System.out.println("Enter manufacturer id (-1 to skip):");
+          int m_id = getInt();
+          if (m_id < 0) { // We skip the manufacturer id and use the other fields
+            System.out.println("Enter supplier id:");
+            int supplier_id = getInt();
+            SupplierData supplier = db.getSupplierById(supplier_id);
+            if (checkSupplier(supplier_name, supplier)) {
+              System.out.println("Enter product id:");
+              int product_id = getInt();
+              System.out.println("Enter component (n/a to delete all components):");
+              String component = getString();
+              if (component.equals("n/a")) {
+                component = "";
+              }
+              db.deleteManufacturing(product_id, supplier_id, component);
             }
-            db.deleteManufacturing(product_id, supplier_id, component);
+          } else {
+            db.deleteManufacturing(m_id);
           }
         }
           break;
