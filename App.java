@@ -1103,6 +1103,12 @@ public class App {
           if (checkSupplier(supplier_name, supplier)) {
             System.out.println("Enter component id:");
             int m_id = getInt();
+            ManufacturingData old = db.getOneManufacturing(m_id);
+            if (old == null) {
+              System.out.println("Component not found");
+              break;
+            }
+            System.out.println("Old component: " + old.component);
             System.out.println("Enter new component:");
             String component = getString();
             db.updateManufacturing(m_id, component);
@@ -1128,10 +1134,11 @@ public class App {
       System.out.println("No components found");
       return;
     }
-    String format = "%20s %-5s %20s %-5s %-20s";
-    System.out.println(String.format(format, "Product Name", "ID", "Supplier Name", "ID", "Component"));
+    String format = "%-5s %20s %-5s %20s %-5s %-20s";
+    System.out.println(String.format(format, "ID", "Product Name", "ID", "Supplier Name", "ID", "Component"));
     for (ManufacturingData component : components) {
-      System.out.println(String.format(format, component.product.product_name, component.product.product_id,
+      System.out.println(String.format(format,
+          component.manufacturing_id, component.product.product_name, component.product.product_id,
           component.supplier.supplier_name, component.supplier.supplier_id,
           component.component));
     }

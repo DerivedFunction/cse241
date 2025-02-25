@@ -301,7 +301,7 @@ public class Database {
               String.format("SELECT * FROM %1$s WHERE component LIKE ? ORDER BY component", manufacturing));
       db.selectOneManufacturing = db.dbConnection
           .prepareStatement(
-              String.format("SELECT * FROM %1$s WHERE %2$s_id = ? AND %3$s_id = ?", manufacturing, product, supplier));
+              String.format("SELECT * FROM %1$s WHERE %1$s_id = ?", manufacturing));
       db.addManufacturing = db.dbConnection
           .prepareStatement(String.format("INSERT INTO %1$sb (%2$s_id, %3$s_id, component) VALUES (?,?,?)",
               manufacturing, product, supplier), new String[] { "manufacturing_id" });
@@ -1150,16 +1150,15 @@ public class Database {
     return manufacturing;
   }
 
-  ManufacturingData getOneManufacturing(int product_id, int supplier_id) {
+  ManufacturingData getOneManufacturing(int manufacturing_id) {
     try {
-      selectOneManufacturing.setInt(1, product_id);
-      selectOneManufacturing.setInt(2, supplier_id);
+      selectOneManufacturing.setInt(1, manufacturing_id);
       ResultSet rs = selectOneManufacturing.executeQuery();
       if (rs.next()) {
         return getManufacturing(rs);
       }
     } catch (SQLException e) {
-      Log.error("Cannot get all manufacturing with id =" + product_id + "supplier = " + supplier_id);
+      Log.error("Cannot get all manufacturing with id =" + manufacturing_id);
     }
     return null;
   }
@@ -1210,6 +1209,7 @@ public class Database {
 
   private ManufacturingData getManufacturing(ResultSet rs) {
     try {
+      int manufacturing_id = rs.getInt("manufacturing_id");
       int product_id = rs.getInt("product_id");
       String product_name = rs.getString("product_name");
       float price = rs.getFloat("price");
@@ -1220,7 +1220,7 @@ public class Database {
       SupplierData supplier = new SupplierData(supplier_id, supplier_name, loc);
       ProductData product = new ProductData(supplier, product_id, product_name, price, unit_type);
       String component = rs.getString("component");
-      return new ManufacturingData(product, supplier, component);
+      return new ManufacturingData(product, supplier, component, manufacturing_id);
     } catch (SQLException e) {
       Log.error("Cannot get manufacturing");
     }

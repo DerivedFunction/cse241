@@ -1,18 +1,21 @@
 public class ManufacturingData {
+    int manufacturing_id;
     ProductData product;
     SupplierData supplier;
     String component;
 
-    public ManufacturingData(ProductData product, SupplierData supplier, String component) {
+    public ManufacturingData(ProductData product, SupplierData supplier, String component, int manufacturing_id) {
         this.product = product;
         this.supplier = supplier;
         this.component = component;
+        this.manufacturing_id = manufacturing_id;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + manufacturing_id;
         result = prime * result + ((product == null) ? 0 : product.hashCode());
         result = prime * result + ((supplier == null) ? 0 : supplier.hashCode());
         result = prime * result + ((component == null) ? 0 : component.hashCode());
@@ -28,6 +31,8 @@ public class ManufacturingData {
         if (getClass() != obj.getClass())
             return false;
         ManufacturingData other = (ManufacturingData) obj;
+        if (manufacturing_id != other.manufacturing_id)
+            return false;
         if (product == null) {
             if (other.product != null)
                 return false;
@@ -48,8 +53,9 @@ public class ManufacturingData {
 
     @Override
     public String toString() {
-        return "ManufacturingData [product=" + product.toString() + ", supplier=" + supplier.toString() + ", component="
-                + component + "]";
+        return "ManufacturingData [manufacturing_id=" + manufacturing_id + ", product=" + product.toString()
+                + ", supplier=" + supplier.toString()
+                + ", component=" + component + "]";
     }
 
 }
