@@ -45,4 +45,9 @@ public class Log {
     if (ENABLED)
       logger.log(Level.SEVERE, message);
   }
+
+  public static void printStackTrace(Exception e) {
+    if (ENABLED)
+      e.printStackTrace();
+  }
 }

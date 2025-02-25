@@ -129,6 +129,7 @@ public class Database {
       }
       db.dbConnection = conn;
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Error: DriverManager.getConnection() threw a SQLException");
       return null;
     }
@@ -318,6 +319,7 @@ public class Database {
           .prepareStatement(String.format("DELETE FROM %1$sb WHERE %1$s_id = ?", manufacturing));
 
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Error creating prepared statement");
       db.disconnect();
       return null;
@@ -338,6 +340,7 @@ public class Database {
     try {
       dbConnection.close();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Error: Connection.close() threw a SQLException");
 
       dbConnection = null;
@@ -360,9 +363,9 @@ public class Database {
         result.add(getStore(rs));
       }
     } catch (SQLException e) {
-      Log.error("SQL Exception: Cannot get all stores");
-
+      Log.printStackTrace(e);
     }
+    isNull(result);
     return result;
   }
 
@@ -383,10 +386,27 @@ public class Database {
         result = getStore(rs);
       }
     } catch (SQLException e) {
-      Log.error("SQL Exception: store not found: " + id);
-
+      Log.printStackTrace(e);
     }
+    isNull(result);
     return result;
+  }
+
+  /**
+   * Checks the size
+   * 
+   * @param result arraylist
+   */
+  private <E> void isNull(ArrayList<E> result) {
+    if (result == null || result.size() == 0) {
+      System.out.println("No results");
+    }
+  }
+
+  private <E> void isNull(E result) {
+    if (result == null) {
+      System.out.println("No results");
+    }
   }
 
   /**
@@ -403,9 +423,10 @@ public class Database {
         result.add(getStore(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("SQL Exception: Cannot get all stores: " + location);
-
     }
+    isNull(result);
     return result;
   }
 
@@ -416,14 +437,17 @@ public class Database {
    * @return StoreData
    */
   private StoreData getStore(ResultSet rs) {
+    StoreData store = null;
     try {
       Integer store_id = rs.getInt("store_id");
       String loc = rs.getString("location");
-      return new StoreData(store_id, loc);
+      store = new StoreData(store_id, loc);
+      return store;
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get store");
     }
-    return null;
+    return store;
   }
 
   /**
@@ -439,11 +463,19 @@ public class Database {
       addStore.setInt(1, store_id);
       addStore.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot add store");
-
     }
-    Log.info("Got store id: " + store_id);
+    checkStatus(store_id);
     return store_id;
+  }
+
+  private void checkStatus(int count) {
+    if (count > 0) {
+      System.out.println("Operation successful");
+    } else {
+      System.out.println("Operation failed. Check for errors");
+    }
   }
 
   /**
@@ -457,9 +489,11 @@ public class Database {
       deleteStorebyId.setInt(1, store_id);
       count = deleteStorebyId.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot remove store: " + store_id);
 
     }
+    checkStatus(count);
     return count;
   }
 
@@ -477,9 +511,10 @@ public class Database {
       updateStorebyId.setInt(2, store_id);
       count = updateStorebyId.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot update store " + store_id + ": " + location);
-
     }
+    checkStatus(count);
     return count;
   }
 
@@ -500,8 +535,10 @@ public class Database {
         }
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot add building");
     }
+    checkStatus(id);
     return id;
   }
 
@@ -516,8 +553,10 @@ public class Database {
       deleteBuilding.setInt(1, id);
       count = deleteBuilding.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot remove building: " + id);
     }
+    checkStatus(count);
     return count;
   }
 
@@ -535,9 +574,10 @@ public class Database {
       updateBuilding.setInt(2, id);
       count = updateBuilding.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot update building " + id + ": " + location);
-
     }
+    checkStatus(count);
     return count;
   }
 
@@ -551,13 +591,13 @@ public class Database {
     try {
       ResultSet rs = selectAllSuppliers.executeQuery();
       while (rs.next()) {
-
         result.add(getSupplier(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("SQL Exception: Cannot get all suppliers");
-
     }
+    isNull(result);
     return result;
   }
 
@@ -579,9 +619,11 @@ public class Database {
         result = getSupplier(rs);
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("SQL Exception: supplier not found: " + supplier_id);
 
     }
+    isNull(result);
     return result;
   }
 
@@ -603,9 +645,11 @@ public class Database {
         result.add(getSupplier(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("SQL Exception: Cannot get all suppliers: " + location);
 
     }
+    isNull(result);
     return result;
   }
 
@@ -616,7 +660,7 @@ public class Database {
    * @return adjusted string
    */
   private String adjustWildcards(String string) {
-    if (isNull(string) || string.isEmpty()) {
+    if (isNull(string)) {
       return "%";
     }
     return "%" + string + "%";
@@ -629,17 +673,17 @@ public class Database {
    * @return SupplierData
    */
   private SupplierData getSupplier(ResultSet rs) {
-    Integer supplier_id;
+    SupplierData supplier = null;
     try {
-      supplier_id = rs.getInt("supplier_id");
+      int supplier_id = rs.getInt("supplier_id");
       String supplier_name = rs.getString("supplier_name");
       String loc = rs.getString("location");
-      Log.info(new SupplierData(supplier_id, supplier_name, loc).toString());
-      return new SupplierData(supplier_id, supplier_name, loc);
+      supplier = new SupplierData(supplier_id, supplier_name, loc);
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get supplier");
     }
-    return null;
+    return supplier;
   }
 
   /**
@@ -657,9 +701,10 @@ public class Database {
       addSupplier.setString(2, supplier_name);
       addSupplier.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot add supplier");
     }
-    Log.info("Adding supplier: " + supplier_id);
+    checkStatus(supplier_id);
     return supplier_id;
   }
 
@@ -675,9 +720,11 @@ public class Database {
       deleteSupplierById.setInt(1, supplier_id);
       count = deleteSupplierById.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot remove supplier");
 
     }
+    checkStatus(count);
     return count;
   }
 
@@ -697,9 +744,11 @@ public class Database {
       updateSupplierbyId.setString(1, supplier_name);
       count = updateSupplierbyId.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot update supplier " + supplier_id + ": " + location);
 
     }
+    checkStatus(count);
     return count;
   }
 
@@ -716,8 +765,10 @@ public class Database {
         products.add(getProduct(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all products");
     }
+    isNull(products);
     return products;
   }
 
@@ -734,8 +785,10 @@ public class Database {
         products.add(getProductFromLog(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all products");
     }
+    isNull(products);
     return products;
   }
 
@@ -764,8 +817,10 @@ public class Database {
         products.add(getProductFromLog(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all products");
     }
+    isNull(products);
     return products;
   }
 
@@ -776,6 +831,7 @@ public class Database {
    * @return ProductData
    */
   private ProductData getProduct(ResultSet rs) {
+    ProductData product = null;
     try {
       int supplier_id = rs.getInt("supplier_id");
       String supplier_name = rs.getString("supplier_name");
@@ -784,12 +840,12 @@ public class Database {
       int product_id = rs.getInt("product_id");
       float price = rs.getFloat("price");
       String unit = rs.getString("unit_type");
-      Log.info(new ProductData(supplier, product_id, product_name, price, unit).toString());
-      return new ProductData(supplier, product_id, product_name, price, unit);
+      product = new ProductData(supplier, product_id, product_name, price, unit);
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get product");
     }
-    return null;
+    return product;
   }
 
   /**
@@ -799,14 +855,16 @@ public class Database {
    * @return ProductData
    */
   private ProductData getProductFromLog(ResultSet rs) {
+    ProductData product = null;
     try {
       String product_name = rs.getString("product_name");
       int product_id = rs.getInt("product_id");
-      return new ProductData(null, product_id, product_name, 0, null);
+      product = new ProductData(null, product_id, product_name, 0, null);
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get product");
     }
-    return null;
+    return product;
   }
 
   /**
@@ -826,8 +884,10 @@ public class Database {
         products.add(getProduct(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all products with name: " + product_name);
     }
+    isNull(products);
     return products;
   }
 
@@ -848,8 +908,10 @@ public class Database {
         products.add(getProduct(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all products with id: " + product_id);
     }
+    isNull(products);
     return products;
   }
 
@@ -868,8 +930,10 @@ public class Database {
         products.add(getProduct(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all products with id: " + supplier_id);
     }
+    isNull(products);
     return products;
   }
 
@@ -881,17 +945,20 @@ public class Database {
    * @return ProductData object
    */
   ProductData getOneProduct(int product_id, int supplier_id) {
+    ProductData product = null;
     try {
       selectOneProduct.setInt(1, product_id);
       selectOneProduct.setInt(2, supplier_id);
       ResultSet rs = selectOneProduct.executeQuery();
       if (rs.next()) {
-        return getProduct(rs);
+        product = getProduct(rs);
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all products with id =" + product_id + "supplier = " + supplier_id);
     }
-    return null;
+    isNull(product);
+    return product;
   }
 
   /**
@@ -910,9 +977,11 @@ public class Database {
       addProductFromSupplier.setString(4, unit_type);
       count = addProductFromSupplier.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("cannot add product.");
       Log.error(product_id + " " + supplier_id + " " + price + " " + unit_type);
     }
+    checkStatus(count);
     return count;
   }
 
@@ -935,9 +1004,10 @@ public class Database {
       }
 
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("cannot add product to log");
     }
-    Log.info("Got product id: " + product_id);
+    checkStatus(product_id);
     return product_id;
   }
 
@@ -955,9 +1025,11 @@ public class Database {
       deleteProduct.setInt(1, supplier_id);
       count = deleteProduct.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot remove product: " + product_id + "from supplier: " + supplier_id);
 
     }
+    checkStatus(count);
     return count;
   }
 
@@ -979,8 +1051,10 @@ public class Database {
       updateProduct.setInt(4, supplier_id);
       count = updateProduct.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot update product");
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1010,8 +1084,10 @@ public class Database {
         shipments.add(getShipmentLog(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all shipments with destination: " + to_id);
     }
+    isNull(shipments);
     return shipments;
   }
 
@@ -1041,8 +1117,10 @@ public class Database {
         shipments.add(getShipmentLog(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all shipments with supplier: " + supplier_id);
     }
+    isNull(shipments);
     return shipments;
   }
 
@@ -1071,8 +1149,10 @@ public class Database {
         shipments.add(getShipmentLog(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all shipments with destination: store");
     }
+    isNull(shipments);
     return shipments;
   }
 
@@ -1089,8 +1169,10 @@ public class Database {
         shipments.add(getShipmentLog(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all shipments with destination: store");
     }
+    isNull(shipments);
     return shipments;
   }
 
@@ -1116,9 +1198,10 @@ public class Database {
         }
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot add shipment log");
-      e.printStackTrace();
     }
+    checkStatus(shipment_id);
     return shipment_id;
   }
 
@@ -1142,8 +1225,10 @@ public class Database {
       updateShipmentLogDest.setInt(5, supplier_id);
       count = updateShipmentLogDest.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot update shipment log");
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1159,8 +1244,10 @@ public class Database {
       deleteShipmentLogId.setInt(1, shipment_id);
       count = deleteShipmentLogId.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot delete shipment log");
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1179,8 +1266,10 @@ public class Database {
         shipments.add(getShipment(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all shipments with destination: " + shipment_id);
     }
+    isNull(shipments);
     return shipments;
   }
 
@@ -1203,9 +1292,10 @@ public class Database {
       addProducttoShipmentId.setFloat(4, quantity);
       count = addProducttoShipmentId.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot add product to shipment");
-      e.printStackTrace();
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1226,8 +1316,10 @@ public class Database {
       deleteProductFromShipmentId.setInt(3, supplier_id);
       count = deleteProductFromShipmentId.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot delete product from shipment");
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1239,6 +1331,7 @@ public class Database {
    * @return ShipmentData
    */
   private ShipmentData getShipment(ResultSet rs) {
+    ShipmentData shipment = null;
     try {
       int shipment_id = rs.getInt("shipment_id");
       int to_id = rs.getInt("to_id");
@@ -1253,11 +1346,12 @@ public class Database {
       float price = rs.getFloat("price");
       ProductData product = new ProductData(supplier, product_id, product_name, price, unit_type);
       int quantity = rs.getInt("qty");
-      return new ShipmentData(shipment_id, to_id, ship_date, arrive_date, supplier, product, quantity);
+      shipment = new ShipmentData(shipment_id, to_id, ship_date, arrive_date, supplier, product, quantity);
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get shipment");
     }
-    return null;
+    return shipment;
   }
 
   /**
@@ -1267,17 +1361,18 @@ public class Database {
    * @return ShipmentData
    */
   private ShipmentData getShipmentLog(ResultSet rs) {
+    ShipmentData shipment = null;
     try {
       int shipment_id = rs.getInt("shipment_id");
       int to_id = rs.getInt("to_id");
       String ship_date = rs.getString("ship_date");
       String arrive_date = rs.getString("arrive_date");
-      Log.info(new ShipmentData(shipment_id, to_id, ship_date, arrive_date).toString());
-      return new ShipmentData(shipment_id, to_id, ship_date, arrive_date);
+      shipment = new ShipmentData(shipment_id, to_id, ship_date, arrive_date);
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get shipment");
     }
-    return null;
+    return shipment;
   }
 
   /**
@@ -1295,8 +1390,10 @@ public class Database {
         manufacturing.add(getManufacturing(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all manufacturing with supplier: " + supplier_name);
     }
+    isNull(manufacturing);
     return manufacturing;
   }
 
@@ -1315,8 +1412,10 @@ public class Database {
         manufacturing.add(getManufacturing(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all manufacturing with supplier: " + supplier_id);
     }
+    isNull(manufacturing);
     return manufacturing;
   }
 
@@ -1335,8 +1434,10 @@ public class Database {
         manufacturing.add(getManufacturing(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all manufacturing with product: " + product_id);
     }
+    isNull(manufacturing);
     return manufacturing;
   }
 
@@ -1355,8 +1456,10 @@ public class Database {
         manufacturing.add(getManufacturing(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all manufacturing with product: " + product_name);
     }
+    isNull(manufacturing);
     return manufacturing;
   }
 
@@ -1375,8 +1478,10 @@ public class Database {
         manufacturing.add(getManufacturing(rs));
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all manufacturing with component: " + component);
     }
+    isNull(manufacturing);
     return manufacturing;
   }
 
@@ -1387,16 +1492,19 @@ public class Database {
    * @return ManufacturingData object
    */
   ManufacturingData getOneManufacturing(int manufacturing_id) {
+    ManufacturingData m = null;
     try {
       selectOneManufacturing.setInt(1, manufacturing_id);
       ResultSet rs = selectOneManufacturing.executeQuery();
       if (rs.next()) {
-        return getManufacturing(rs);
+        m = getManufacturing(rs);
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get all manufacturing with id =" + manufacturing_id);
     }
-    return null;
+    isNull(m);
+    return m;
   }
 
   /**
@@ -1419,8 +1527,10 @@ public class Database {
         }
       }
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot add manufacturing");
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1438,8 +1548,10 @@ public class Database {
       updateManufacturing.setInt(2, manufacturing_id);
       count = updateManufacturing.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot update manufacturing");
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1459,8 +1571,10 @@ public class Database {
       deleteManufacturingByComponent.setString(3, adjustWildcards(component));
       count = deleteManufacturingByComponent.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot delete manufacturing");
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1476,8 +1590,10 @@ public class Database {
       deleteManufacturingById.setInt(1, manufacturing_id);
       count = deleteManufacturingById.executeUpdate();
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot delete manufacturing");
     }
+    checkStatus(count);
     return count;
   }
 
@@ -1488,6 +1604,7 @@ public class Database {
    * @return ManufacturingData
    */
   private ManufacturingData getManufacturing(ResultSet rs) {
+    ManufacturingData m = null;
     try {
       int manufacturing_id = rs.getInt("manufacturing_id");
       int product_id = rs.getInt("product_id");
@@ -1500,10 +1617,11 @@ public class Database {
       SupplierData supplier = new SupplierData(supplier_id, supplier_name, loc);
       ProductData product = new ProductData(supplier, product_id, product_name, price, unit_type);
       String component = rs.getString("component");
-      return new ManufacturingData(product, supplier, component, manufacturing_id);
+      m = new ManufacturingData(product, supplier, component, manufacturing_id);
     } catch (SQLException e) {
+      Log.printStackTrace(e);
       Log.error("Cannot get manufacturing");
     }
-    return null;
+    return m;
   }
 }
