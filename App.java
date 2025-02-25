@@ -1,6 +1,8 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 public class App {
   static Scanner scanner = new Scanner(System.in);
@@ -77,7 +79,10 @@ public class App {
     String name = getString();
     String location;
     if (name.equals("!random")) {
-      for (int i = 0; i < 20; i++) {
+      ArrayList<StoreData> stores = new ArrayList<>();
+      ArrayList<SupplierData> suppliers = new ArrayList<>();
+      ArrayList<ProductData> products = new ArrayList<>();
+      for (int i = 0; i < 5; i++) {
         Log.info("Generating random data...");
         // Generate a random store, supplier location
         // Generate a random length for string
@@ -85,11 +90,35 @@ public class App {
         Integer randomLength = secureRandom.nextInt(10) + 10;
         location = UUID.randomUUID().toString().substring(0, randomLength);
         String supplier_name = UUID.randomUUID().toString().substring(0, randomLength);
-        db.addStore(location);
-        db.addStore(location);
-        db.addSupplier(supplier_name, location);
-        db.addSupplier(supplier_name, location);
+        stores.add(db.getStoreById(db.addStore(location)));
+        stores.add(db.getStoreById(db.addStore(location)));
+        suppliers.add(db.getSupplierById(db.addSupplier(supplier_name, location)));
+        suppliers.add(db.getSupplierById(db.addSupplier(supplier_name, location)));
       }
+
+      for (int i = 0; i < 5; i++) {
+        // Generate a random product name
+        java.security.SecureRandom secureRandom = new java.security.SecureRandom();
+        Integer randomLength = secureRandom.nextInt(10) + 10;
+        String product_name = UUID.randomUUID().toString().substring(0, randomLength);
+        int product_id = db.addProductLog(product_name);
+        ProductData product = db.getProductLog(product_id, null).get(0);
+        Log.info(product.toString());
+        products.add(product);
+      }
+      // Now create a shipment
+      int shipment_id = db.addShipmentLog(stores.get(0).store_id, "2021-01-01 00:00", "2025-01-01 00:00");
+      Log.info("Shipment id: " + shipment_id);
+      for (ProductData product : products) {
+        Log.info("Adding product to shipment..." + product.toString());
+        // add product from supplier
+        db.addProductFromSupplier(product.product_id, suppliers.get(0).supplier_id, 10.0f, "kg");
+        Log.info("Product id: " + product.product_id + " Supplier id: " + suppliers.get(0).supplier_id);
+        db.addProductFromSupplier(product.product_id, suppliers.get(1).supplier_id, 10.0f, "lb");
+        db.addProductToShipment(shipment_id, product.product_id, suppliers.get(0).supplier_id, 10.0f);
+        db.addProductToShipment(shipment_id, product.product_id, suppliers.get(1).supplier_id, 5.0f);
+      }
+
     } else {
       System.out.println("Enter location:");
       location = getString();
@@ -203,25 +232,48 @@ public class App {
    */
   private static void viewShipments(String supplier_name) {
     System.out.println("-------------------------");
+    System.out.println("[0] View shipment's products using Shipment [I]d");
     System.out.println("[1] View shipments by [D]estination");
     System.out.println("[2] View shipments by [S]upplier");
     System.out.println("[3] [C]onfigure Shipments");
     System.out.println("[4] [R]escind a Shipment");
     System.out.println("[5] Return to [M]ain menu");
+    Log.info(supplier_name);
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
       switch (getChar()) {
+        case '0': {
+          // We can only get shipments if the destination is a store when supplier_name is
+          // null.
+          // If the destination is a supplier, we can get the products from the shipment
+          // from the supplier name
+          System.out.println("Enter shipment id:");
+          int shipment_id = getInt();
+          // Lets get all the shipments
+          shipments = db.getShipmentsByDest(-1, supplier_name);
+          // Lets check if the shipment_id is in the list
+          // If it is, we can get the products from that shipment
+          for (ShipmentData shipment : shipments) {
+            if (shipment.shipment_id == shipment_id) {
+              shipments = db.getProductsFromShipmentId(shipment_id);
+              break;
+            }
+          }
+          printShipments(shipments, false);
+        }
+          break;
         case '1':
         case 'd': {// Get only the shipments by destination from supplier_name
           System.out.println("Enter destination id (-1 to skip):");
           int destination_id = getInt();
           shipments = db.getShipmentsByDest(destination_id, supplier_name);
+          printShipments(shipments, true);
         }
           break;
         case '2':
         case 's': {
           // If supplier_name is null, we can choose any supplier or skip
-          if (supplier_name == null || supplier_name.isEmpty()) {
+          if (isStore(supplier_name)) {
             System.out.println("Enter supplier name (n/a to skip):");
             supplier_name = getString();
             if (supplier_name.equals("n/a")) {
@@ -237,28 +289,43 @@ public class App {
             SupplierData supplier = db.getSupplierById(supplier_id);
             if (checkSupplier(supplier_name, supplier)) {
               shipments = db.getShipmentsBySupplier(supplier_id, supplier_name);
+              printShipments(shipments, true);
             } else {
               System.out.println("Supplier id does not match supplier name");
             }
           }
+
         }
           break;
         case '3':
         case 'c':
-          configureShipment(supplier_name);
+          if (isStore(supplier_name)) {
+            System.out.println("Not a supplier. Cannot configure shipments");
+          } else {
+            configureShipment(supplier_name);
+          }
           break;
         case '4':
         case 'r': {
-          // We can only cancel shipments by destination.
-          // Ask for shipment id first.
-          // so destination id must match supplier if supplier name is not empty
-          // else destination id must match store_id
-          if (supplier_name == null || supplier_name.isEmpty()) {
+          // We can only cancel shipments by destination in the shipment log
+          // Ask for shipment id first. Then we can cancel the shipment
+          ArrayList<ShipmentData> shipmentsToCancel = new ArrayList<>();
+          if (isStore(supplier_name)) {
             // A shipment to a store
-
+            shipmentsToCancel = db.getShipmentToStore();
           } else {
             // A shipment to a supplier
-
+            shipmentsToCancel = db.getShipmentToSupplier(supplier_name);
+          }
+          // Now check if we have any shipments to cancel, and enter the shipment id that
+          // is in the list
+          if (shipmentsToCancel.size() > 0) {
+            printShipments(shipmentsToCancel, true);
+            System.out.println("Enter shipment id to cancel:");
+            int shipment_id = getInt();
+            db.deleteShipmentLog(shipment_id);
+          } else {
+            System.out.println("No shipments to cancel");
           }
         }
           break;
@@ -273,8 +340,6 @@ public class App {
     } catch (Exception e) {
       System.out.println("Exception");
     }
-    if (shipments.size() > 0)
-      printShipments(shipments, false);
     viewShipments(supplier_name);
   }
 
@@ -285,7 +350,8 @@ public class App {
    * Remove a product from a shipment
    * Update a shipment
    * 
-   * @param supplier_name
+   * @param supplier_name The name of the supplier
+   * @return void
    */
   private static void configureShipment(String supplier_name) {
     System.out.println("-------------------------");
@@ -298,12 +364,13 @@ public class App {
       switch (getChar()) {
         case '1':
         case 's': {
-
           System.out.println("Enter destination id:");
           int destination_id = getInt();
           // Get shipment date
+          System.out.println("Enter ship date:");
           String ship_date = createDate();
           // Get arrival date
+          System.out.println("Enter arrival date:");
           String arrive_date = createDate();
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
@@ -382,26 +449,33 @@ public class App {
       }
     } catch (Exception e) {
       System.out.println("Exception");
+      e.printStackTrace();
     }
     configureShipment(supplier_name);
   }
 
   private static String createDate() {
-    // Ask for date in format yyyy-mm-dd. If not, use current date
-    // Loop until we have a valid date
+    // Ask for date in valid sql timestamp. If not, use current timestamp
+    // Loop until we have a valid timestamp (in 12hr format)
     boolean valid = false;
+    String date = "2000-01-01 00:00";
     while (!valid) {
-      System.out.println("Enter ship date (yyyy-mm-dd) or n/a to skip:");
-      String date = getString();
+      System.out.println("Enter date (yyyy-MM-dd HH:mm) or n/a to skip:");
+      date = getString();
+      Log.info(date);
       // check for correct format
       if (date.equals("n/a")) {
-        return java.time.LocalDateTime.now().toString();
-      } else if (date.matches("\\d{4}-\\d{2}-\\d{2}")) {
-        return date;
+        date = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        valid = true;
+      } else if (date.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}")) {
+        valid = true;
+      } else {
+        System.out.println("Invalid date format. Please enter in yyyy-MM-dd HH:mm format.");
+        valid = false;
       }
-      System.out.println("Invalid date format. Please enter in yyyy-mm-dd format.");
     }
-    return java.time.LocalDateTime.now().toString();
+    Log.info(date);
+    return date;
   }
 
   private static float getFloat(int precision) {
@@ -413,20 +487,29 @@ public class App {
   }
 
   private static void printShipments(ArrayList<ShipmentData> shipments, boolean isSimple) {
+    if (shipments.size() == 0) {
+      System.out.println("No shipments found");
+      return;
+    }
+    float total = 0;
     if (!isSimple) {
-      String format = "%-5s %-10s %-10s %-10s %-10s %-20s %-10s %-10s";
-      System.out
-          .println(
-              String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date", "Supplier ID", "Supplier Name",
-                  "Product ID",
-                  "Quantity"));
+      String format = "%-5s %-10s %-20s %-20s %20s %-5s %20s %-5s %-10s %-10s %-10s";
+      System.out.println(
+          String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date",
+              "Supplier Name", "ID",
+              "Product Name", "ID", "Quantity", "Price", "UI"));
       for (ShipmentData shipment : shipments) {
-        System.out.println(String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date,
-            shipment.supplier.supplier_id, shipment.product_id, shipment.quantity));
+        System.out.println(
+            String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date, shipment.arrive_date,
+                shipment.supplier.supplier_name, shipment.supplier.supplier_id,
+                shipment.product.product_name, shipment.product.product_id, shipment.quantity, shipment.product.price,
+                shipment.product.unit_type));
+        total += shipment.quantity * shipment.product.price;
       }
+      System.out.println("Total: $" + total);
     } else {
-      String format = "%-5s %-10s %-10s %-10s";
-      System.out.println(String.format(format, "ID", "Destination", "Ship Date", "Arrive Date"));
+      String format = "%-5s %-10s %-20s %-20s";
+      System.out.println(String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date"));
       for (ShipmentData shipment : shipments) {
         System.out.println(
             String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date, shipment.arrive_date));
@@ -465,7 +548,7 @@ public class App {
           int id = getInt();
           if (id == -1) {
             products = db.getProductByName("", supplier_name);
-          } else if (supplier_name == null || supplier_name.isEmpty()) {
+          } else if (isStore(supplier_name)) {
             // If null, we can get all the products from any supplier
             products = db.getProductByProductId(id, null);
           } else {
@@ -509,14 +592,18 @@ public class App {
   }
 
   private static void printProducts(ArrayList<ProductData> products, boolean isSimple) {
+    if (products.size() == 0) {
+      System.out.println("No Products found");
+      return;
+    }
     if (!isSimple) {
-      String format = "%-5s %-20s %-20s %-20s %-10s %-10s";
-      System.out.println(String.format(format, "ID", "Name", "Supplier", "Supplier ID", "Price", "Unit Type"));
+      String format = "%-5s %-20s %20s %-5s %-10s %-10s";
+      System.out.println(String.format(format, "ID", "Name", "Supplier Name", "ID", "Price", "UI"));
       for (ProductData product : products) {
-        System.out
-            .println(String.format(format, product.product_id, product.product_name, product.supplier.supplier_name,
-                product.supplier.supplier_id,
-                product.price, product.unit_type));
+        System.out.println(String.format(format,
+            product.product_id, product.product_name,
+            product.supplier.supplier_name, product.supplier.supplier_id,
+            product.price, product.unit_type));
       }
     } else {
       String format = "%-5s %-20s";
@@ -549,7 +636,10 @@ public class App {
               stores = db.getAllStores();
               printStores(stores);
             } else {
-              stores.add(db.getStoreById(storeId));
+              StoreData store = db.getStoreById(storeId);
+              if (store != null) {
+                stores.add(store);
+              }
               printStores(stores);
             }
           } else {
@@ -616,6 +706,10 @@ public class App {
   }
 
   private static void printStores(ArrayList<StoreData> stores) {
+    if (stores.size() == 0) {
+      System.out.println("No stores found");
+      return;
+    }
     String format = "%-5s %-20s";
     System.out.println(String.format(format, "ID", "Location"));
     for (StoreData store : stores) {
@@ -624,6 +718,10 @@ public class App {
   }
 
   private static void printSuppliers(ArrayList<SupplierData> suppliers) {
+    if (suppliers.size() == 0) {
+      System.out.println("No suppliers found");
+      return;
+    }
     String format = "%-5s %-20s %-20s";
     System.out.println(String.format(format, "ID", "Name", "Location"));
     for (SupplierData supplier : suppliers) {
@@ -650,7 +748,7 @@ public class App {
           break;
         case '3':
         case 's':
-          viewShipments(null);
+          viewShipments(supplier_name);
           break;
         case '4':
         case 'c':
@@ -798,7 +896,15 @@ public class App {
   }
 
   private static boolean checkSupplier(String supplier_name, SupplierData supplier) {
+    Log.info(supplier_name + " " + supplier.toString());
+    if (isStore(supplier_name)) {
+      return true;
+    }
     return supplier != null && supplier.supplier_name.contains(supplier_name);
+  }
+
+  private static boolean isStore(String supplier_name) {
+    return supplier_name == null || supplier_name.isEmpty();
   }
 
   private static void manageSupplier(String supplier_name) {
@@ -864,7 +970,12 @@ public class App {
   private static void viewSuppliers(int supplier_id, String supplier_name, String location) {
     ArrayList<SupplierData> suppliers = new ArrayList<>();
     if (supplier_id > 0) {
-      suppliers.add(db.getSupplierById(supplier_id));
+      SupplierData supplier = db.getSupplierById(supplier_id);
+      if (supplier != null) {
+        suppliers.add(supplier);
+      } else {
+        System.out.println("Supplier not found");
+      }
     } else {
       if (supplier_name == null)
         supplier_name = "";

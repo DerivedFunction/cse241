@@ -80,7 +80,7 @@ CREATE TABLE shipmentLog(
   FOREIGN KEY (to_id) 
     REFERENCES building(id)
     ON DELETE CASCADE,
-  CHECK (arrive_date > ship_date)
+  CHECK (arrive_date >= ship_date)
 );
 -- Multiple products can be for a specfic shipment from any supplier
 CREATE TABLE product_ship(
@@ -101,6 +101,7 @@ CREATE TABLE product_ship(
 CREATE VIEW shipment AS(
   SELECT * FROM product_ship
   NATURAL JOIN shipmentLog
+  NATURAL JOIN productLog
   NATURAL JOIN productb
   NATURAL JOIN supplierb
 );
@@ -151,5 +152,14 @@ SELECT * FROM supplier WHERE supplier_name LIKE '%Hello%' AND location like '%';
 SELECT * FROM productlog;
 SELECT * FROM product;
 INSERT INTO productlog (product_name) VALUES ('ABC');
-SELECT * FROM shipment
-ALTER TABLE shipmentLog ADD COLUMN arrivedate TIMESTAMP ;
+SELECT * FROM shipmentlog;
+
+INSERT INTO shipmentLog (to_id, ship_date, arrive_date)
+VALUES (78, TO_DATE('2025-02-25 00:25', 'YYYY-MM-DD HH24:MI'), TO_DATE('2026-03-12 00:30', 'YYYY-MM-DD HH24:MI'));
+SELECT * FROM shipmentLog;
+SELECT * FROM shipmentlog WHERE to_id = 78 AND shipment_id IN (
+SELECT shipment_id FROM shipment WHERE supplier_name LIKE '%Hello%') ORDER BY shipment_id;
+
+SELECT * FROM shipmentlog WHERE to_id IN (SELECT store_id FROM store);
+SELECT * FROM shipment WHERE shipment_id = 26;
+SELECT * FROM productlog;

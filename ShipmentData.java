@@ -25,32 +25,33 @@ public class ShipmentData {
      * The supplier
      */
     SupplierData supplier;
+
     /**
-     * The product id
+     * The product
      */
-    int product_id;
+    ProductData product;
 
     /**
      * The quantity of the product in the shipment
      */
     float quantity;
 
-    public ShipmentData(int shipment_id, int to_id, String ship_date, String arrive_date, SupplierData supplier,
-            int product_id, float quantity) {
-        this.shipment_id = shipment_id;
-        this.to_id = to_id;
-        this.ship_date = ship_date;
-        this.arrive_date = arrive_date;
-        this.supplier = supplier;
-        this.product_id = product_id;
-        this.quantity = quantity;
-    }
-
     public ShipmentData(int shipment_id, int to_id, String ship_date, String arrive_date) {
         this.shipment_id = shipment_id;
         this.to_id = to_id;
         this.ship_date = ship_date;
         this.arrive_date = arrive_date;
+    }
+
+    public ShipmentData(int shipment_id, int to_id, String ship_date, String arrive_date, SupplierData supplier,
+            ProductData product, float quantity) {
+        this.shipment_id = shipment_id;
+        this.to_id = to_id;
+        this.ship_date = ship_date;
+        this.arrive_date = arrive_date;
+        this.supplier = supplier;
+        this.product = product;
+        this.quantity = quantity;
     }
 
     @Override
@@ -62,7 +63,7 @@ public class ShipmentData {
         result = prime * result + ((ship_date == null) ? 0 : ship_date.hashCode());
         result = prime * result + ((arrive_date == null) ? 0 : arrive_date.hashCode());
         result = prime * result + ((supplier == null) ? 0 : supplier.hashCode());
-        result = prime * result + product_id;
+        result = prime * result + ((product == null) ? 0 : product.hashCode());
         result = prime * result + Float.floatToIntBits(quantity);
         return result;
     }
@@ -95,7 +96,10 @@ public class ShipmentData {
                 return false;
         } else if (!supplier.equals(other.supplier))
             return false;
-        if (product_id != other.product_id)
+        if (product == null) {
+            if (other.product != null)
+                return false;
+        } else if (!product.equals(other.product))
             return false;
         if (Float.floatToIntBits(quantity) != Float.floatToIntBits(other.quantity))
             return false;
@@ -104,15 +108,14 @@ public class ShipmentData {
 
     @Override
     public String toString() {
-        if (supplier != null) {
+        if (supplier == null) {
             return "ShipmentData [shipment_id=" + shipment_id + ", to_id=" + to_id + ", ship_date=" + ship_date
-                    + ", arrive_date=" + arrive_date + ", supplier=" + supplier.toString() + ", product_id="
-                    + product_id
-                    + ", quantity=" + quantity + "]";
+                    + ", arrive_date=" + arrive_date + "]";
         }
-        // ShipmentLog
         return "ShipmentData [shipment_id=" + shipment_id + ", to_id=" + to_id + ", ship_date=" + ship_date
-                + ", arrive_date=" + arrive_date + "]";
+                + ", arrive_date=" + arrive_date + ", supplier=" + supplier.toString() + ", product="
+                + product.toString() + ", quantity="
+                + quantity + "]";
     }
 
 }

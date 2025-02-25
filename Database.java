@@ -46,6 +46,7 @@ public class Database {
   private PreparedStatement selectAllShipmentByDest;
   private PreparedStatement selectAllShipmentFromSupplierId;
   private PreparedStatement selectAllShipmentFromSupplierName;
+  private PreparedStatement selectShipmentIdsToStore;
   private PreparedStatement selectShipmentIdsToSupplier;
   private PreparedStatement addShipmentLogId;
   private PreparedStatement updateShipmentLogDest;
@@ -98,7 +99,7 @@ public class Database {
    */
   static Database getDatabase(String ip, String port, String path, String user,
       String pass, ArrayList<String> table) {
-    if (path == null || "".equals(path)) {
+    if (isNull(path) || "".equals(path)) {
       path = "/";
     }
     // Create an unconfigured Database obj
@@ -180,7 +181,7 @@ public class Database {
           .prepareStatement(String.format("UPDATE %1$s SET %1$s_name = ? WHERE %1$s_id = ?", supplier));
       // CRUD operations for product
       db.selectAllProducts = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$s", product));
+          .prepareStatement(String.format("SELECT * FROM %1$s ORDER BY %1$s_name", product));
       db.selectAllProductsByNames = db.dbConnection
           .prepareStatement(
               String.format(
@@ -196,12 +197,11 @@ public class Database {
                   product, supplier));
 
       db.selectAllProductsLog = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$slog", product));
+          .prepareStatement(String.format("SELECT * FROM %1$slog ORDER BY %1$s_name", product));
       db.selectProductLogByName = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$slog WHERE %1$s_name LIKE ?", product));
+          .prepareStatement(String.format("SELECT * FROM %1$slog WHERE %1$s_name LIKE ? ORDER BY %1$s_name", product));
       db.selectOneSimpleProduct = db.dbConnection
           .prepareStatement(String.format("SELECT * FROM %1$slog WHERE %1$s_id = ?", product));
-
       db.selectOneProduct = db.dbConnection
           .prepareStatement(
               String.format("SELECT * FROM %1$s WHERE %1$s_id = ? AND %2$s_id = ?", product, supplier));
@@ -221,30 +221,34 @@ public class Database {
       db.selectAllShipmentByDest = db.dbConnection
           .prepareStatement(
               String.format("SELECT * FROM %1$slog WHERE to_id = ? AND %1$s_id IN (" +
-                  "SELECT %1$s_id IN %1$s WHERE %2$s_name LIKE ?)",
+                  "SELECT %1$s_id FROM %1$s WHERE %2$s_name LIKE ?) ORDER BY %1$s_id",
                   shipment, supplier));
       db.selectAllShipmentFromSupplierName = db.dbConnection
           .prepareStatement(
               String.format("SELECT * FROM %1$slog WHERE %1$s_id IN (" +
-                  "SELECT %1$s_id IN %1$s WHERE %2$s_name LIKE ?)",
+                  "SELECT %1$s_id FROM %1$s WHERE %2$s_name LIKE ?) ORDER BY %1$s_id",
                   shipment, supplier));
       db.selectAllShipmentFromSupplierId = db.dbConnection
           .prepareStatement(
-              String.format("SELECT * FROM %1$slog WHERE %1$s_id IN (SELECT %1$s_id FROM %1$s WHERE %2$s_id = ?)",
+              String.format("SELECT * FROM %1$slog WHERE %1$s_id IN (" +
+                  "SELECT %1$s_id FROM %1$s WHERE %2$s_id = ?) ORDER BY %1$s_id",
                   shipment, supplier));
       // select shipment ids only from shipment to suppliers
       db.selectShipmentIdsToSupplier = db.dbConnection
           .prepareStatement(String.format(
-              "SELECT * FROM %1$slog WHERE to_id IN (SELECT %2$s_id FROM %2$s WHERE %2$s_name LIKE ?)",
+              "SELECT * FROM %1$slog WHERE to_id IN (" +
+                  "SELECT %2$s_id FROM %2$s WHERE %2$s_name LIKE ?) ORDER BY %1$s_id",
               shipment, supplier));
       // select shipment ids only from shipment to stores
       db.selectShipmentIdsToStore = db.dbConnection
           .prepareStatement(String.format(
-              "SELECT * FROM %1$slog WHERE to_id IN (SELECT %2$s_id FROM %2$s)",
+              "SELECT * FROM %1$slog WHERE to_id IN (SELECT %2$s_id FROM %2$s) ORDER BY %1$s_id",
               shipment, store));
       db.addShipmentLogId = db.dbConnection
           .prepareStatement(
-              String.format("INSERT INTO %1$slog (to_id, ship_date, arrive_date) VALUES (?,?,?)", shipment),
+              String.format(
+                  "INSERT INTO %1$slog (to_id, ship_date, arrive_date) VALUES (?,TO_DATE(?,'YYYY-MM-DD HH24:MI'),TO_DATE(?,'YYYY-MM-DD HH24:MI'))",
+                  shipment),
               new String[] { "shipment_id" });
       db.updateShipmentLogDest = db.dbConnection
           .prepareStatement(String.format(
@@ -255,7 +259,7 @@ public class Database {
           .prepareStatement(String.format("DELETE FROM %1$slog WHERE %1$s_id = ?", shipment));
       // CRUD operations for product in shipment
       db.selectProductsFromShipmentId = db.dbConnection
-          .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_id = ?", shipment));
+          .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_id = ? ORDER BY %1$s_id", shipment));
       db.addProducttoShipmentId = db.dbConnection
           .prepareStatement(String.format("INSERT INTO %1$s (%2$s_id, %3$s_id, %4$s_id, qty) VALUES (?,?,?,?)",
               product_ship, shipment, product, supplier));
@@ -549,7 +553,7 @@ public class Database {
   }
 
   private String adjustWildcards(String string) {
-    if (string == null || string.isEmpty()) {
+    if (isNull(string) || string.isEmpty()) {
       return "%";
     }
     return "%" + string + "%";
@@ -660,10 +664,10 @@ public class Database {
     try {
       ResultSet rs;
       // Only product_id is given
-      if (product_id > 0 && product_name == null) {
+      if (product_id > 0 && isNull(product_name)) {
         selectOneSimpleProduct.setInt(1, product_id);
         rs = selectOneSimpleProduct.executeQuery();
-      } else if (product_id < 0 && product_name != null) { // Only product_name is given
+      } else if (product_id < 0 && !isNull(product_name)) { // Only product_name is given
         selectProductLogByName.setString(1, adjustWildcards(product_name));
         rs = selectProductLogByName.executeQuery();
       } else { // Get the entire log
@@ -775,6 +779,7 @@ public class Database {
       count = addProductFromSupplier.executeUpdate();
     } catch (SQLException e) {
       Log.error("cannot add product.");
+      Log.error(product_id + " " + supplier_id + " " + price + " " + unit_type);
     }
     return count;
   }
@@ -794,6 +799,7 @@ public class Database {
     } catch (SQLException e) {
       Log.error("cannot add product to log");
     }
+    Log.info("Got product id: " + product_id);
     return product_id;
   }
 
@@ -827,9 +833,18 @@ public class Database {
   ArrayList<ShipmentData> getShipmentsByDest(int to_id, String supplier_name) {
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
-      selectAllShipmentByDest.setInt(1, to_id);
-      selectAllShipmentByDest.setString(2, adjustWildcards(supplier_name));
-      ResultSet rs = selectAllShipmentByDest.executeQuery();
+      ResultSet rs;
+      // Only destination id is given
+      if (to_id > 0 && isNull(supplier_name)) {
+        selectAllShipmentByDest.setInt(1, to_id);
+        rs = selectAllShipmentByDest.executeQuery();
+      } else if (to_id < 0 && !isNull(supplier_name)) { // Only supplier name is given
+        selectAllShipmentFromSupplierName.setString(1, adjustWildcards(supplier_name));
+        rs = selectAllShipmentFromSupplierName.executeQuery();
+      } else { // Since both are not given (-1, null), get the log from store
+        Log.info("Getting all shipments to store");
+        rs = selectShipmentIdsToStore.executeQuery();
+      }
       while (rs.next()) {
         shipments.add(getShipmentLog(rs));
       }
@@ -844,12 +859,15 @@ public class Database {
     try {
       ResultSet rs;
       // Only supplier name is given
-      if (supplier_id > 0 && supplier_name != null) {
+      if (supplier_id < 0 && !isNull(supplier_name)) {
         selectAllShipmentFromSupplierName.setString(1, adjustWildcards(supplier_name));
         rs = selectAllShipmentFromSupplierName.executeQuery();
-      } else { // Get the entire log
+      } else if (supplier_id > 0 && isNull(supplier_name)) {// Only supplier name is given
         selectAllShipmentFromSupplierId.setInt(1, supplier_id);
         rs = selectAllShipmentFromSupplierId.executeQuery();
+      } else { // Get the entire log
+        selectShipmentIdsToStore.setInt(1, supplier_id);
+        rs = selectShipmentIdsToStore.executeQuery();
       }
       while (rs.next()) {
         shipments.add(getShipmentLog(rs));
@@ -860,11 +878,28 @@ public class Database {
     return shipments;
   }
 
+  private static boolean isNull(String string) {
+    return string == null || string.isEmpty();
+  }
+
   ArrayList<ShipmentData> getShipmentToSupplier(String supplier_name) {
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
       selectShipmentIdsToSupplier.setString(1, adjustWildcards(supplier_name));
       ResultSet rs = selectShipmentIdsToSupplier.executeQuery();
+      while (rs.next()) {
+        shipments.add(getShipmentLog(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all shipments with destination: store");
+    }
+    return shipments;
+  }
+
+  ArrayList<ShipmentData> getShipmentToStore() {
+    ArrayList<ShipmentData> shipments = new ArrayList<>();
+    try {
+      ResultSet rs = selectShipmentIdsToStore.executeQuery();
       while (rs.next()) {
         shipments.add(getShipmentLog(rs));
       }
@@ -889,6 +924,7 @@ public class Database {
       }
     } catch (SQLException e) {
       Log.error("Cannot add shipment log");
+      e.printStackTrace();
     }
     return shipment_id;
   }
@@ -936,6 +972,7 @@ public class Database {
 
   int addProductToShipment(int shipment_id, int product_id, int supplier_id, float quantity) {
     int count = 0;
+    quantity = Math.round(quantity * 100) / 100;
     try {
       addProducttoShipmentId.setInt(1, shipment_id);
       addProducttoShipmentId.setInt(2, product_id);
@@ -944,6 +981,7 @@ public class Database {
       count = addProducttoShipmentId.executeUpdate();
     } catch (SQLException e) {
       Log.error("Cannot add product to shipment");
+      e.printStackTrace();
     }
     return count;
   }
@@ -971,8 +1009,12 @@ public class Database {
       String supplier_name = rs.getString("supplier_name");
       SupplierData supplier = new SupplierData(supplier_id, supplier_name, "");
       int product_id = rs.getInt("product_id");
-      int quantity = rs.getInt("quantity");
-      return new ShipmentData(shipment_id, to_id, ship_date, arrive_date, supplier, product_id, quantity);
+      String product_name = rs.getString("product_name");
+      String unit_type = rs.getString("unit_type");
+      float price = rs.getFloat("price");
+      ProductData product = new ProductData(supplier, product_id, product_name, price, unit_type);
+      int quantity = rs.getInt("qty");
+      return new ShipmentData(shipment_id, to_id, ship_date, arrive_date, supplier, product, quantity);
     } catch (SQLException e) {
       Log.error("Cannot get shipment");
     }
@@ -985,6 +1027,7 @@ public class Database {
       int to_id = rs.getInt("to_id");
       String ship_date = rs.getString("ship_date");
       String arrive_date = rs.getString("arrive_date");
+      Log.info(new ShipmentData(shipment_id, to_id, ship_date, arrive_date).toString());
       return new ShipmentData(shipment_id, to_id, ship_date, arrive_date);
     } catch (SQLException e) {
       Log.error("Cannot get shipment");

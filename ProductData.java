@@ -15,6 +15,9 @@ public class ProductData {
 
     @Override
     public String toString() {
+        if (supplier == null) {
+            return "ProductData [product_id=" + product_id + ", product_name=" + product_name + "]";
+        }
         return "ProductData [" + supplier.toString() + ", product_id=" + product_id + ", product_name="
                 + product_name + ", price=$" + price + "unit=" + unit_type + "]";
     }
