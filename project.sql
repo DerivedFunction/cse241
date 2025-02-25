@@ -47,7 +47,6 @@ CREATE TABLE productlog (
 -- Each supplier can have the same product, with its own 
 -- unit type and price
 -- We can identify the origin by its supplier
--- NEED TO recreate table
 CREATE TABLE productb(
   product_id	  number(5),
   supplier_id	  number(5),
@@ -87,13 +86,13 @@ CREATE TABLE product_ship(
   shipment_id number(5),
   product_id number(5),
   supplier_id   number(5),
-  qty           numeric(5,2) DEFAULT 0,
-  PRIMARY KEY (shipment_id, product_id, qty),
+  qty           numeric(5,2),
+  PRIMARY KEY (shipment_id, product_id, supplier_id, qty),
   FOREIGN KEY (product_id, supplier_id)
     REFERENCES productb
     ON DELETE CASCADE,
   FOREIGN KEY (shipment_id)
-    REFERENCES shipmentLog
+    REFERENCES shipmentlog
     ON DELETE CASCADE
 );
 -- shows the all products in shipment with the quantity, price and unit type
@@ -152,14 +151,7 @@ SELECT * FROM supplier WHERE supplier_name LIKE '%Hello%' AND location like '%';
 SELECT * FROM productlog;
 SELECT * FROM product;
 INSERT INTO productlog (product_name) VALUES ('ABC');
-SELECT * FROM shipmentlog;
-
-INSERT INTO shipmentLog (to_id, ship_date, arrive_date)
-VALUES (78, TO_DATE('2025-02-25 00:25', 'YYYY-MM-DD HH24:MI'), TO_DATE('2026-03-12 00:30', 'YYYY-MM-DD HH24:MI'));
-SELECT * FROM shipmentLog;
-SELECT * FROM shipmentlog WHERE to_id = 78 AND shipment_id IN (
-SELECT shipment_id FROM shipment WHERE supplier_name LIKE '%Hello%') ORDER BY shipment_id;
-
-SELECT * FROM shipmentlog WHERE to_id IN (SELECT store_id FROM store);
-SELECT * FROM shipment WHERE shipment_id = 26;
-SELECT * FROM productlog;
+SELECT * FROM shipment
+-- Store 78
+-- Supplier 81 (Hello)
+-- Product 2
