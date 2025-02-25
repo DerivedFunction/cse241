@@ -1,0 +1,101 @@
+# cse241 Final Project: Regork
+
+## Overview
+
+This document provides an overview of how data is stored in SQL for the cse241 project. The project involves a database schema that includes various entities such as buildings, stores, suppliers, products, shipments, and manufacturing processes.
+
+## Database Schema
+
+### Tables
+
+1. **Building** (`building`)
+
+   - **Description**: A general entity representing locations.
+   - **Columns**:
+     - `id`: Unique identifier for each building (Primary Key).
+     - `location`: The physical location of the building.
+
+2. **Store** (`storeb`)
+
+   - **Description**: A specialized entity derived from the building entity.
+   - **Columns**:
+     - `store_id`: References the `id` from the building table (Primary Key, Foreign Key).
+
+3. **Supplier** (`supplierb`)
+
+   - **Description**: Another specialized entity derived from the building entity, representing suppliers.
+   - **Columns**:
+     - `supplier_id`: References the `id` from the building table (Primary Key, Foreign Key).
+     - `supplier_name`: Name of the supplier.
+
+4. **Product Log** (`productLog`)
+
+   - **Description**: A table that logs generic products.
+   - **Columns**:
+     - `product_id`: Unique identifier for each product (Primary Key).
+     - `product_name`: Name of the product.
+
+5. **Product** (`productb`)
+
+   - **Description**: Links products to suppliers and includes pricing information.
+   - **Columns**:
+     - `product_id`: References the `product_id` from the product log (Primary Key, Foreign Key).
+     - `supplier_id`: References the `supplier_id` from the supplier table (Primary Key, Foreign Key).
+     - `price`: Price of the product.
+     - `unit_type`: Type of unit for the product (default is 'ea').
+
+6. **Shipment Log** (`shipmentLog`)
+
+   - **Description**: Records shipments to various locations.
+   - **Columns**:
+     - `shipment_id`: Unique identifier for each shipment (Primary Key).
+     - `to_id`: References the `id` from the building table (Foreign Key).
+     - `ship_date`: Date the shipment is sent.
+     - `arrive_date`: Date the shipment arrives (must be after `ship_date`).
+
+7. **Product Shipment** (`product_ship`)
+
+   - **Description**: Links products to specific shipments.
+   - **Columns**:
+     - `shipment_id`: References the `shipment_id` from the shipment log (Primary Key, Foreign Key).
+     - `product_id`: References the `product_id` from the product table (Primary Key, Foreign Key).
+     - `supplier_id`: References the `supplier_id` from the supplier table (Primary Key, Foreign Key).
+     - `qty`: Quantity of the product in the shipment.
+
+8. **Manufacturing** (`manufacturingb`)
+   - **Description**: Represents the relationship between products and their components.
+   - **Columns**:
+     - `product_id`: References the `product_id` from the product table (Primary Key, Foreign Key).
+     - `supplier_id`: References the `supplier_id` from the supplier table (Primary Key, Foreign Key).
+     - `component`: Name of the component used in manufacturing.
+
+### Views
+
+1. **Store View**
+
+   - Combines data from the `storeb` and `building` tables to provide a comprehensive view of stores, including their locations.
+
+2. **Supplier View**
+
+   - Combines data from the `supplierb` and `building` tables to provide a comprehensive view of suppliers, including their locations.
+
+3. **Product View**
+
+   - Combines data from the `productb`, `productlog`, and `supplierb` tables to provide a comprehensive view of products, their suppliers, and pricing.
+
+4. **Shipment View**
+
+   - Combines data from the `product_ship`, `shipmentLog`, `productLog`, `productb`, and `supplierb` tables to provide a comprehensive view of shipments, including products, quantities, prices, and suppliers.
+
+5. **Manufacturing View**
+   - Combines data from the `manufacturingb` and `product` tables to provide a comprehensive view of manufacturing processes.
+
+## Relationships
+
+- **Building** is the parent/general entity for both **Store** and **Supplier**, establishing a one-to-many relationship.
+- **Product** is linked to **Supplier** and **Product Log**, establishing a many-to-one relationship.
+- **Shipment Log** is linked to **Building**, establishing a many-to-one relationship.
+- **Product Shipment** creates a many-to-many relationship between **Product** and **Shipment Log**.
+- **Manufacturing** establishes a many-to-many relationship between **Product** and **Supplier** through components.
+
+This schema allows for efficient data retrieval and management, ensuring that all entities are properly linked and that data integrity is maintained throughout the database.

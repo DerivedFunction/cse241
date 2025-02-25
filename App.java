@@ -1,8 +1,7 @@
-import java.lang.reflect.Array;
+import java.io.Console;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 public class App {
   static Scanner scanner = new Scanner(System.in);
@@ -10,18 +9,32 @@ public class App {
 
   public static void main(String[] args) {
     Log.info("Logging enabled");
-    System.out.print("Enter your username: ");
-    String userid = scanner.next();
-    System.out.print("Enter your password: ");
-    String passwd = scanner.next();
-    scanner.nextLine();
     String dbid = "edgar1.cse.lehigh.edu";
     String port = "1521";
     String path = "cse241";
+    System.out.print("Enter your username: ");
+    String userid = scanner.next();
+    Console console = System.console();
+    String passwd = new String(console.readPassword("Enter your password: "));
+    scanner.nextLine();
+
     ArrayList<String> table = InitalizeTable();
-    db = Database.getDatabase(dbid, port, path, userid, passwd, table);
+    int attempts = 0;
+    while (attempts < 3) {
+      db = Database.getDatabase(dbid, port, path, userid, passwd, table);
+      if (db != null) {
+        break;
+      }
+      System.out.println("Failed to connect to database. Please try again.");
+      attempts++;
+      System.out.print("Enter your username: ");
+      userid = scanner.next();
+      passwd = new String(console.readPassword("Enter your password: "));
+      scanner.nextLine();
+    }
+
     if (db == null) {
-      System.out.println("Failed to connect to database");
+      System.out.println("Failed to connect to database after 3 attempts");
       scanner.close();
       return;
     }
@@ -34,7 +47,6 @@ public class App {
     System.out.println("[2] I am a [S]upplier");
     System.out.println("[3] [E]xit");
     try {
-
       switch (getChar()) {
         case '1':
         case 'm':
@@ -66,16 +78,11 @@ public class App {
 
   private static void exitMenu() {
     System.out.println("Database disconnected.");
-    System.out.println("Press Ctrl+C to close");
-    // A workaround to some issues with System.exit(0) repeating main() for no
-    // reason
-    while (true) {
-      ;
-    }
+    System.exit(0);
   }
 
   private static void generateData() {
-    System.out.println("Create a new supplier. Enter supplier name (or !random): ");
+    System.out.println("Confirm data genration with (!random): ");
     String name = getString();
     String location;
     if (name.equals("!random")) {
@@ -118,11 +125,16 @@ public class App {
         db.addProductToShipment(shipment_id, product.product_id, suppliers.get(0).supplier_id, 10.0f);
         db.addProductToShipment(shipment_id, product.product_id, suppliers.get(1).supplier_id, 5.0f);
       }
-
-    } else {
-      System.out.println("Enter location:");
-      location = getString();
-      db.addSupplier(name, location);
+      // Now add some random components to a product
+      for (ProductData product : products) {
+        for (int i = 0; i < 5; i++) {
+          java.security.SecureRandom secureRandom = new java.security.SecureRandom();
+          Integer randomLength = secureRandom.nextInt(10) + 10;
+          String component_name = UUID.randomUUID().toString().substring(0, randomLength);
+          int component_id = db.addManufacturing(product.product_id, suppliers.get(0).supplier_id, component_name);
+          Log.info("Component id: " + component_id);
+        }
+      }
     }
     userMenu();
   }
@@ -185,7 +197,7 @@ public class App {
           else {
             String name;
             String location;
-            System.out.println("Enter supplier name (or n/a to skip)");
+            System.out.println(" (or n/a to skip)");
             name = getString();
             if (name.equals("n/a")) {
               name = "";
@@ -272,23 +284,24 @@ public class App {
           break;
         case '2':
         case 's': {
+          String temp_supplier_name = supplier_name;
           // If supplier_name is null, we can choose any supplier or skip
           if (isStore(supplier_name)) {
             System.out.println("Enter supplier name (n/a to skip):");
-            supplier_name = getString();
-            if (supplier_name.equals("n/a")) {
-              supplier_name = "";
+            temp_supplier_name = getString();
+            if (temp_supplier_name.equals("n/a")) {
+              temp_supplier_name = "";
             }
           }
           System.out.println("Enter supplier id (-1 to skip):");
           int supplier_id = getInt();
           if (supplier_id == -1) {
-            shipments = db.getShipmentsBySupplier(-1, supplier_name);
+            shipments = db.getShipmentsBySupplier(-1, temp_supplier_name);
           } else {
             // Check if the supplier_id matches the supplier name (if it exists)
             SupplierData supplier = db.getSupplierById(supplier_id);
             if (checkSupplier(supplier_name, supplier)) {
-              shipments = db.getShipmentsBySupplier(supplier_id, supplier_name);
+              shipments = db.getShipmentsBySupplier(supplier_id, temp_supplier_name);
               printShipments(shipments, true);
             } else {
               System.out.println("Supplier id does not match supplier name");
@@ -389,7 +402,7 @@ public class App {
           System.out.println("Enter product id:");
           int product_id = getInt();
           System.out.println("Enter quantity:");
-          float quantity = getFloat(2);
+          float quantity = getFloat(4);
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
@@ -479,11 +492,12 @@ public class App {
   }
 
   private static float getFloat(int precision) {
-    float x = scanner.nextFloat();
-    // round to decimals
-    x = Math.round(x * Math.pow(10, precision)) / (float) Math.pow(10, precision);
-    scanner.nextLine();
-    return x;
+    while (!scanner.hasNextFloat()) {
+      System.out.println("Invalid input. Please enter a float:");
+      scanner.nextLine();
+    }
+    float x = Float.parseFloat(scanner.nextLine());
+    return Math.round(x * Math.pow(10, precision)) / (float) Math.pow(10, precision);
   }
 
   private static void printShipments(ArrayList<ShipmentData> shipments, boolean isSimple) {
@@ -586,8 +600,7 @@ public class App {
     } catch (Exception e) {
       System.out.println("Exception");
     }
-    if (products.size() > 0)
-      printProducts(products, false);
+    printProducts(products, false);
     viewProducts(supplier_name);
   }
 
@@ -693,16 +706,16 @@ public class App {
     while (input == null || input.trim().isEmpty()) {
       input = scanner.nextLine();
     }
-    return input;
+    return input.toLowerCase();
   }
 
   private static int getInt() {
-    if (scanner.hasNextInt()) {
-      int x = scanner.nextInt();
+    while (!scanner.hasNextInt()) {
+      System.out.println("Invalid input. Please enter an integer:");
       scanner.nextLine();
-      return x;
     }
-    return -1;
+    int x = Integer.parseInt(scanner.nextLine());
+    return x;
   }
 
   private static void printStores(ArrayList<StoreData> stores) {
@@ -752,7 +765,7 @@ public class App {
           break;
         case '4':
         case 'c':
-          viewComponents(null);
+          viewComponents(supplier_name);
           break;
         case '5':
         case 'm':
@@ -837,7 +850,7 @@ public class App {
             product_id = db.addProductLog(product_name);
           }
           System.out.println("Enter price:");
-          float price = getFloat(2);
+          float price = getFloat(4);
           scanner.nextLine();
           System.out.println("Enter unit type:");
           String unit_type = getString();
@@ -871,7 +884,7 @@ public class App {
         SupplierData supplier = db.getSupplierById(supplier_id);
         if (checkSupplier(supplier_name, supplier)) {
           System.out.println("Enter new price:");
-          float price = getFloat(2);
+          float price = getFloat(4);
           scanner.nextLine();
           System.out.println("Enter new unit type:");
           String unit_type = getString();
@@ -896,6 +909,10 @@ public class App {
   }
 
   private static boolean checkSupplier(String supplier_name, SupplierData supplier) {
+    if (supplier == null) {
+      System.out.println("Supplier not found");
+      return false;
+    }
     Log.info(supplier_name + " " + supplier.toString());
     if (isStore(supplier_name)) {
       return true;
@@ -988,9 +1005,140 @@ public class App {
     }
   }
 
-  private static void viewComponents(String object) {
-    // TODO Auto-generated method stub
-    System.out.println("Unimplemented method 'viewComponents'");
+  private static void viewComponents(String supplier_name) {
+    System.out.println("-------------------------");
+    System.out.println("[0] View Components by [N]ame");
+    System.out.println("[1] View Components by [S]upplier");
+    System.out.println("[2] View Components by [P]roduct");
+    System.out.println("[3] [A]dd a new Component");
+    System.out.println("[4] [R]emove a Component");
+    System.out.println("[5] [U]pdate a Component");
+    System.out.println("[6] Return to [M]ain Menu");
+    try {
+      switch (getChar()) {
+        case '0':
+        case 'n': {
+          System.out.println("Enter component name (n/a to skip): ");
+          String component = getString();
+          if (component.equals("n/a")) {
+            component = "";
+          }
+          ArrayList<ManufacturingData> components = db.getManufacturingByComponent(component);
+          printComponents(components);
+        }
+          break;
+        case '1':
+        case 's': {
+          String tempSupplierName = supplier_name;
+          if (isStore(supplier_name)) {
+            System.out.println("Enter supplier name (n/a to skip):");
+            tempSupplierName = getString();
+            if (tempSupplierName.equals("n/a")) {
+              tempSupplierName = "";
+            }
+          }
+          System.out.println("Enter supplier id (-1 to skip):");
+          int supplier_id = getInt();
+          if (supplier_id == -1) {
+            ArrayList<ManufacturingData> components = db.getManufacturingBySupplierName(tempSupplierName);
+            printComponents(components);
+          } else {
+            SupplierData supplier = db.getSupplierById(supplier_id);
+            if (checkSupplier(tempSupplierName, supplier)) {
+              ArrayList<ManufacturingData> components = db.getManufacturingBySupplierId(supplier_id);
+              printComponents(components);
+            } else {
+              System.out.println("Supplier id does not match supplier name");
+            }
+          }
+        }
+          break;
+        case '2':
+        case 'p': {
+          System.out.println("Enter product id:");
+          int product_id = getInt();
+          ArrayList<ManufacturingData> components = db.getManufacturingByProductId(product_id);
+          printComponents(components);
+        }
+          break;
+        case '3':
+        case 'a': {
+          System.out.println("Enter product id:");
+          int product_id = getInt();
+          System.out.println("Enter supplier id:");
+          int supplier_id = getInt();
+          SupplierData supplier = db.getSupplierById(supplier_id);
+          if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter Component:");
+            String component = getString();
+            db.addManufacturing(product_id, supplier_id, component);
+          } else {
+            System.out.println("Supplier id does not match supplier name");
+          }
+        }
+          break;
+        case '4':
+        case 'r': {
+          System.out.println("Enter product id:");
+          int product_id = getInt();
+          System.out.println("Enter supplier id:");
+          int supplier_id = getInt();
+          SupplierData supplier = db.getSupplierById(supplier_id);
+          if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter component (n/a to delete all components):");
+            String component = getString();
+            if (component.equals("n/a")) {
+              component = "";
+            }
+            db.deleteManufacturing(product_id, supplier_id, component);
+          } else {
+            System.out.println("Supplier id does not match supplier name");
+          }
+        }
+          break;
+        case '5':
+        case 'u': {
+          System.out.println("Enter product id:");
+          int product_id = getInt();
+          System.out.println("Enter supplier id:");
+          int supplier_id = getInt();
+          SupplierData supplier = db.getSupplierById(supplier_id);
+          if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter new component:");
+            String component = getString();
+            db.updateManufacturing(product_id, supplier_id, component);
+          } else {
+            System.out.println("Supplier id does not match supplier name");
+          }
+        }
+          break;
+        case '6':
+        case 'm':
+          userMenu();
+          break;
+        default:
+          System.out.println("Invalid choice");
+          break;
+      }
+    } catch (Exception e) {
+      System.out.println("Exception");
+    }
+    viewComponents(supplier_name);
+  }
+
+  private static void printComponents(ArrayList<ManufacturingData> components) {
+    if (components.size() == 0) {
+      System.out.println("No components found");
+      return;
+    }
+    String format = "%20s %-5s %20s %-5s %-20s";
+    System.out.println(String.format(format, "Product Name", "ID", "Supplier Name", "ID", "Component"));
+    for (ManufacturingData component : components) {
+      System.out.println(String.format(format, component.product.product_name, component.product.product_id,
+          component.supplier.supplier_name, component.supplier.supplier_id,
+          component.component));
+    }
+
   }
 
   private static ArrayList<String> InitalizeTable() {

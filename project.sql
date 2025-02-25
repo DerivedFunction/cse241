@@ -50,8 +50,8 @@ CREATE TABLE productlog (
 CREATE TABLE productb(
   product_id	  number(5),
   supplier_id	  number(5),
-  price		      numeric(5,2) DEFAULT 0,
-  unit_type     varchar(2) DEFAULT 'ea', -- default to each
+  price		      numeric(10,4) DEFAULT 0,
+  unit_type     varchar(10) DEFAULT 'ea', -- default to each
   PRIMARY KEY (product_id, supplier_id),
   FOREIGN KEY (supplier_id) 
     REFERENCES supplierb
@@ -86,7 +86,7 @@ CREATE TABLE product_ship(
   shipment_id number(5),
   product_id number(5),
   supplier_id   number(5),
-  qty           numeric(5,2),
+  qty           numeric(10,4),
   PRIMARY KEY (shipment_id, product_id, supplier_id, qty),
   FOREIGN KEY (product_id, supplier_id)
     REFERENCES productb
@@ -108,7 +108,7 @@ CREATE VIEW shipment AS(
 -- the components require the product, the supplier,
 -- and the component name
 -- Many-to-Many relationship between product and component through manufacturing
-CREATE TABLE manufacturing(
+CREATE TABLE manufacturingb(
   product_id  number(5),
   supplier_id number(5),
   component   varchar(20),
@@ -118,6 +118,10 @@ CREATE TABLE manufacturing(
     ON DELETE CASCADE
 ); 
 
+CREATE VIEW manufacturing AS(
+  SELECT * FROM manufacturingb
+  NATURAL JOIN product
+);
 -- Drop existing views
 DROP VIEW store;
 DROP VIEW supplier;
@@ -126,7 +130,7 @@ DROP VIEW shipment;
 
 -- Delete existing tables
 DELETE FROM product_ship;
-DELETE FROM manufacturing;
+DELETE FROM manufacturingb;
 DELETE FROM productb;
 DELETE FROM productlog;
 DELETE FROM shipmentLog;
@@ -135,7 +139,7 @@ DELETE FROM storeb;
 DELETE FROM building;
 -- Drop existing tables
 DROP TABLE product_ship;
-DROP TABLE manufacturing;
+DROP TABLE manufacturingb;
 DROP TABLE productb;
 DROP TABLE productlog;
 DROP TABLE shipmentLog;
@@ -151,7 +155,8 @@ SELECT * FROM supplier WHERE supplier_name LIKE '%Hello%' AND location like '%';
 SELECT * FROM productlog;
 SELECT * FROM product;
 INSERT INTO productlog (product_name) VALUES ('ABC');
-SELECT * FROM shipment
+SELECT * FROM manufacturing;
+
 -- Store 78
--- Supplier 81 (Hello)
+-- Supplier 1 (Hello, abc)
 -- Product 2

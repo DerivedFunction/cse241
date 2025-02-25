@@ -56,6 +56,17 @@ public class Database {
   private PreparedStatement addProducttoShipmentId;
   private PreparedStatement deleteProductFromShipmentId;
 
+  private PreparedStatement selectAllManufacturingFromSupplierName;
+  private PreparedStatement selectAllManufacturingFromSupplierId;
+  private PreparedStatement selectAllManufacturingFromProductId;
+  private PreparedStatement selectAllManufacturingFromProductName;
+  private PreparedStatement selectAllManufacturingFromComponent;
+  private PreparedStatement selectOneManufacturing;
+
+  private PreparedStatement addManufacturing;
+  private PreparedStatement updateManufacturing;
+  private PreparedStatement deleteManufacturing;
+
   private Database() {
   }
 
@@ -116,7 +127,6 @@ public class Database {
       db.dbConnection = conn;
     } catch (SQLException e) {
       Log.error("Error: DriverManager.getConnection() threw a SQLException");
-
       return null;
     }
     return createPreparedStatements(db, table);
@@ -268,6 +278,37 @@ public class Database {
               product_ship, shipment, product, supplier));
 
       // CRUD operations for manufacturing
+      db.selectAllManufacturingFromSupplierName = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$s WHERE %2$s_id IN (" +
+                  "SELECT %2$s_id FROM %2$s WHERE %2$s_name LIKE ?) ORDER BY %2$s_name",
+                  manufacturing, supplier));
+      db.selectAllManufacturingFromSupplierId = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$s WHERE %2$s_id = ? ORDER BY %2$s_id", manufacturing, supplier));
+      db.selectAllManufacturingFromProductId = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$s WHERE %2$s_id = ? ORDER BY %2$s_id", manufacturing, product));
+      db.selectAllManufacturingFromProductName = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$s WHERE %2$s_id IN (" +
+                  "SELECT %2$s_id FROM %2$s WHERE %2$s_name LIKE ?) ORDER BY %2$s_name",
+                  manufacturing, product));
+      db.selectAllManufacturingFromComponent = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$s WHERE component LIKE ? ORDER BY component", manufacturing));
+      db.selectOneManufacturing = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$s WHERE %2$s_id = ? AND %3$s_id = ?", manufacturing, product, supplier));
+      db.addManufacturing = db.dbConnection
+          .prepareStatement(String.format("INSERT INTO %1$sb (%2$s_id, %3$s_id, component) VALUES (?,?,?)",
+              manufacturing, product, supplier));
+      db.updateManufacturing = db.dbConnection
+          .prepareStatement(String.format("UPDATE %1$sb SET component = ? WHERE %2$s_id = ? AND %3$s_id = ?",
+              manufacturing, product, supplier));
+      db.deleteManufacturing = db.dbConnection
+          .prepareStatement(String.format("DELETE FROM %1$sb WHERE %2$s_id = ? AND %3$s_id = ? AND component LIKE ?",
+              manufacturing, product, supplier));
 
     } catch (SQLException e) {
       Log.error("Error creating prepared statement");
@@ -565,6 +606,7 @@ public class Database {
       supplier_id = rs.getInt("supplier_id");
       String supplier_name = rs.getString("supplier_name");
       String loc = rs.getString("location");
+      Log.info(new SupplierData(supplier_id, supplier_name, loc).toString());
       return new SupplierData(supplier_id, supplier_name, loc);
     } catch (SQLException e) {
       Log.error("Cannot get supplier");
@@ -1031,6 +1073,148 @@ public class Database {
       return new ShipmentData(shipment_id, to_id, ship_date, arrive_date);
     } catch (SQLException e) {
       Log.error("Cannot get shipment");
+    }
+    return null;
+  }
+
+  ArrayList<ManufacturingData> getManufacturingBySupplierName(String supplier_name) {
+    ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
+    try {
+      selectAllManufacturingFromSupplierName.setString(1, adjustWildcards(supplier_name));
+      ResultSet rs = selectAllManufacturingFromSupplierName.executeQuery();
+      while (rs.next()) {
+        manufacturing.add(getManufacturing(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all manufacturing with supplier: " + supplier_name);
+    }
+    return manufacturing;
+  }
+
+  ArrayList<ManufacturingData> getManufacturingBySupplierId(int supplier_id) {
+    ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
+    try {
+      selectAllManufacturingFromSupplierId.setInt(1, supplier_id);
+      ResultSet rs = selectAllManufacturingFromSupplierId.executeQuery();
+      while (rs.next()) {
+        manufacturing.add(getManufacturing(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all manufacturing with supplier: " + supplier_id);
+    }
+    return manufacturing;
+  }
+
+  ArrayList<ManufacturingData> getManufacturingByProductId(int product_id) {
+    ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
+    try {
+      selectAllManufacturingFromProductId.setInt(1, product_id);
+      ResultSet rs = selectAllManufacturingFromProductId.executeQuery();
+      while (rs.next()) {
+        manufacturing.add(getManufacturing(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all manufacturing with product: " + product_id);
+    }
+    return manufacturing;
+  }
+
+  ArrayList<ManufacturingData> getManufacturingByProductName(String product_name) {
+    ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
+    try {
+      selectAllManufacturingFromProductName.setString(1, adjustWildcards(product_name));
+      ResultSet rs = selectAllManufacturingFromProductName.executeQuery();
+      while (rs.next()) {
+        manufacturing.add(getManufacturing(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all manufacturing with product: " + product_name);
+    }
+    return manufacturing;
+  }
+
+  ArrayList<ManufacturingData> getManufacturingByComponent(String component) {
+    ArrayList<ManufacturingData> manufacturing = new ArrayList<>();
+    try {
+      selectAllManufacturingFromComponent.setString(1, adjustWildcards(component));
+      ResultSet rs = selectAllManufacturingFromComponent.executeQuery();
+      while (rs.next()) {
+        manufacturing.add(getManufacturing(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all manufacturing with component: " + component);
+    }
+    return manufacturing;
+  }
+
+  ManufacturingData getOneManufacturing(int product_id, int supplier_id) {
+    try {
+      selectOneManufacturing.setInt(1, product_id);
+      selectOneManufacturing.setInt(2, supplier_id);
+      ResultSet rs = selectOneManufacturing.executeQuery();
+      if (rs.next()) {
+        return getManufacturing(rs);
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all manufacturing with id =" + product_id + "supplier = " + supplier_id);
+    }
+    return null;
+  }
+
+  int addManufacturing(int product_id, int supplier_id, String component) {
+    int count = 0;
+    try {
+      addManufacturing.setInt(1, product_id);
+      addManufacturing.setInt(2, supplier_id);
+      addManufacturing.setString(3, component);
+      count = addManufacturing.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot add manufacturing");
+    }
+    return count;
+  }
+
+  int updateManufacturing(int product_id, int supplier_id, String component) {
+    int count = 0;
+    try {
+      updateManufacturing.setString(1, component);
+      updateManufacturing.setInt(2, product_id);
+      updateManufacturing.setInt(3, supplier_id);
+      count = updateManufacturing.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot update manufacturing");
+    }
+    return count;
+  }
+
+  int deleteManufacturing(int product_id, int supplier_id, String component) {
+    int count = 0;
+    try {
+      deleteManufacturing.setInt(1, product_id);
+      deleteManufacturing.setInt(2, supplier_id);
+      deleteManufacturing.setString(3, adjustWildcards(component));
+      count = deleteManufacturing.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot delete manufacturing");
+    }
+    return count;
+  }
+
+  private ManufacturingData getManufacturing(ResultSet rs) {
+    try {
+      int product_id = rs.getInt("product_id");
+      String product_name = rs.getString("product_name");
+      float price = rs.getFloat("price");
+      String unit_type = rs.getString("unit_type");
+      int supplier_id = rs.getInt("supplier_id");
+      String supplier_name = rs.getString("supplier_name");
+      String loc = rs.getString("location");
+      SupplierData supplier = new SupplierData(supplier_id, supplier_name, loc);
+      ProductData product = new ProductData(supplier, product_id, product_name, price, unit_type);
+      String component = rs.getString("component");
+      return new ManufacturingData(product, supplier, component);
+    } catch (SQLException e) {
+      Log.error("Cannot get manufacturing");
     }
     return null;
   }
