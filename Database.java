@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import javax.naming.spi.DirStateFactory.Result;
+
 public class Database {
   private Connection dbConnection;
 
@@ -302,10 +304,11 @@ public class Database {
               String.format("SELECT * FROM %1$s WHERE %2$s_id = ? AND %3$s_id = ?", manufacturing, product, supplier));
       db.addManufacturing = db.dbConnection
           .prepareStatement(String.format("INSERT INTO %1$sb (%2$s_id, %3$s_id, component) VALUES (?,?,?)",
-              manufacturing, product, supplier));
+              manufacturing, product, supplier), new String[] { "manufacturing_id" });
       db.updateManufacturing = db.dbConnection
-          .prepareStatement(String.format("UPDATE %1$sb SET component = ? WHERE %2$s_id = ? AND %3$s_id = ?",
-              manufacturing, product, supplier));
+          .prepareStatement(
+              String.format("UPDATE %1$sb SET component = ? WHERE %1$s_id = ?",
+                  manufacturing));
       db.deleteManufacturing = db.dbConnection
           .prepareStatement(String.format("DELETE FROM %1$sb WHERE %2$s_id = ? AND %3$s_id = ? AND component LIKE ?",
               manufacturing, product, supplier));
@@ -1167,19 +1170,24 @@ public class Database {
       addManufacturing.setInt(1, product_id);
       addManufacturing.setInt(2, supplier_id);
       addManufacturing.setString(3, component);
-      count = addManufacturing.executeUpdate();
+      int affectedRows = addManufacturing.executeUpdate();
+      if (affectedRows > 0) {
+        ResultSet rs = addManufacturing.getGeneratedKeys();
+        if (rs.next()) {
+          count = rs.getInt(1);
+        }
+      }
     } catch (SQLException e) {
       Log.error("Cannot add manufacturing");
     }
     return count;
   }
 
-  int updateManufacturing(int product_id, int supplier_id, String component) {
+  int updateManufacturing(int manufacturing_id, String component) {
     int count = 0;
     try {
       updateManufacturing.setString(1, component);
-      updateManufacturing.setInt(2, product_id);
-      updateManufacturing.setInt(3, supplier_id);
+      updateManufacturing.setInt(2, manufacturing_id);
       count = updateManufacturing.executeUpdate();
     } catch (SQLException e) {
       Log.error("Cannot update manufacturing");

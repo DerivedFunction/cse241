@@ -109,10 +109,11 @@ CREATE VIEW shipment AS(
 -- and the component name
 -- Many-to-Many relationship between product and component through manufacturing
 CREATE TABLE manufacturingb(
+  manufacturing_id  number(5) GENERATED ALWAYS AS IDENTITY,
   product_id  number(5),
   supplier_id number(5),
-  component   varchar(20),
-  PRIMARY KEY(product_id, supplier_id, component),
+  component   varchar(20) NOT NULL,
+  PRIMARY KEY(m_id),
   FOREIGN KEY (product_id, supplier_id)
     REFERENCES productb(product_id, supplier_id)
     ON DELETE CASCADE
@@ -127,6 +128,7 @@ DROP VIEW store;
 DROP VIEW supplier;
 DROP VIEW product;
 DROP VIEW shipment;
+DROP VIEW manufacturing;
 
 -- Delete existing tables
 DELETE FROM product_ship;

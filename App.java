@@ -377,55 +377,52 @@ public class App {
       switch (getChar()) {
         case '1':
         case 's': {
-          System.out.println("Enter destination id:");
-          int destination_id = getInt();
-          // Get shipment date
-          System.out.println("Enter ship date:");
-          String ship_date = createDate();
-          // Get arrival date
-          System.out.println("Enter arrival date:");
-          String arrive_date = createDate();
+
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
           if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter destination id:");
+            int destination_id = getInt();
+            // Get shipment date
+            System.out.println("Enter ship date:");
+            String ship_date = createDate();
+            // Get arrival date
+            System.out.println("Enter arrival date:");
+            String arrive_date = createDate();
             db.addShipmentLog(destination_id, ship_date, arrive_date);
-          } else {
-            System.out.println("Supplier id does not match supplier name");
           }
         }
           break;
         case '2':
         case 'a': {
-          System.out.println("Enter shipment id:");
-          int shipment_id = getInt();
-          System.out.println("Enter product id:");
-          int product_id = getInt();
-          System.out.println("Enter quantity:");
-          float quantity = getFloat(4);
+
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
           if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter shipment id:");
+            int shipment_id = getInt();
+            System.out.println("Enter product id:");
+            int product_id = getInt();
+            System.out.println("Enter quantity:");
+            float quantity = getFloat(4);
             db.addProductToShipment(shipment_id, product_id, supplier_id, quantity);
-          } else {
-            System.out.println("Supplier id does not match supplier name");
           }
         }
           break;
         case '3':
         case 'r': {
-          System.out.println("Enter shipment id:");
-          int shipment_id = getInt();
-          System.out.println("Enter product id:");
-          int product_id = getInt();
+
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
           if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter shipment id:");
+            int shipment_id = getInt();
+            System.out.println("Enter product id:");
+            int product_id = getInt();
             db.deleteProductFromShipment(shipment_id, product_id, supplier_id);
-          } else {
-            System.out.println("Supplier id does not match supplier name");
           }
         }
           break;
@@ -434,21 +431,20 @@ public class App {
           // update the shipment log given the shipment id.
           // Can update destination, ship_date, arrive_date
           // Supplier name must match the supplier_id
-          System.out.println("Enter shipment id:");
-          int shipment_id = getInt();
-          System.out.println("Enter destination id:");
-          int destination_id = getInt();
-          System.out.println("Enter ship date:");
-          String ship_date = getString();
-          System.out.println("Enter arrive date:");
-          String arrive_date = getString();
+
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
           if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter shipment id:");
+            int shipment_id = getInt();
+            System.out.println("Enter destination id:");
+            int destination_id = getInt();
+            System.out.println("Enter ship date:");
+            String ship_date = getString();
+            System.out.println("Enter arrive date:");
+            String arrive_date = getString();
             db.updateShipmentLog(shipment_id, destination_id, ship_date, arrive_date, supplier_id);
-          } else {
-            System.out.println("Supplier id does not match supplier name");
           }
         }
           break;
@@ -863,12 +859,13 @@ public class App {
         break;
       case '4':
       case 'r': {
-        System.out.println("Enter product id:");
-        int product_id = getInt();
+
         System.out.println("Enter supplier id:");
         int supplier_id = getInt();
         SupplierData supplier = db.getSupplierById(supplier_id);
         if (checkSupplier(supplier_name, supplier)) {
+          System.out.println("Enter product id:");
+          int product_id = getInt();
           db.deleteProduct(product_id, supplier_id);
         } else {
           System.out.println("Supplier id does not match supplier name");
@@ -877,12 +874,12 @@ public class App {
         break;
       case '5':
       case 'u':
-        System.out.println("Enter product id:");
-        int product_id = getInt();
         System.out.println("Enter supplier id:");
         int supplier_id = getInt();
         SupplierData supplier = db.getSupplierById(supplier_id);
         if (checkSupplier(supplier_name, supplier)) {
+          System.out.println("Enter product id:");
+          int product_id = getInt();
           System.out.println("Enter new price:");
           float price = getFloat(4);
           scanner.nextLine();
@@ -917,7 +914,12 @@ public class App {
     if (isStore(supplier_name)) {
       return true;
     }
-    return supplier != null && supplier.supplier_name.contains(supplier_name);
+    if (supplier != null && supplier.supplier_name.contains(supplier_name)) {
+      return true;
+    } else {
+      System.out.println("Supplier id does not match supplier name");
+      return false;
+    }
   }
 
   private static boolean isStore(String supplier_name) {
@@ -1063,52 +1065,47 @@ public class App {
           break;
         case '3':
         case 'a': {
-          System.out.println("Enter product id:");
-          int product_id = getInt();
+
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
           if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter product id:");
+            int product_id = getInt();
             System.out.println("Enter Component:");
             String component = getString();
             db.addManufacturing(product_id, supplier_id, component);
-          } else {
-            System.out.println("Supplier id does not match supplier name");
           }
         }
           break;
         case '4':
         case 'r': {
-          System.out.println("Enter product id:");
-          int product_id = getInt();
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
           if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter product id:");
+            int product_id = getInt();
             System.out.println("Enter component (n/a to delete all components):");
             String component = getString();
             if (component.equals("n/a")) {
               component = "";
             }
             db.deleteManufacturing(product_id, supplier_id, component);
-          } else {
-            System.out.println("Supplier id does not match supplier name");
           }
         }
           break;
         case '5':
         case 'u': {
-          System.out.println("Enter product id:");
-          int product_id = getInt();
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
           if (checkSupplier(supplier_name, supplier)) {
+            System.out.println("Enter component id:");
+            int m_id = getInt();
             System.out.println("Enter new component:");
             String component = getString();
-            db.updateManufacturing(product_id, supplier_id, component);
-          } else {
-            System.out.println("Supplier id does not match supplier name");
+            db.updateManufacturing(m_id, component);
           }
         }
           break;
