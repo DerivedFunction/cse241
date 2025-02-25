@@ -55,12 +55,11 @@ public class App {
           break;
         default:
           System.out.println("Invalid choice");
-          userMenu();
       }
     } catch (Exception e) {
-      System.out.println("Exception: Invalid choice");
-      userMenu();
+      System.out.println("Exception");
     }
+    userMenu();
   }
 
   private static void exitMenu() {
@@ -130,10 +129,9 @@ public class App {
           break;
         default:
           System.out.println("Invalid choice");
-          managerMenu();
       }
     } catch (Exception e) {
-      System.out.println("Exception: Invalid choice");
+      System.out.println("Exception");
     }
     managerMenu();
   }
@@ -141,56 +139,299 @@ public class App {
   private static void getSupplierData() {
     System.out.println("-------------------------");
     System.out.println("[1] Get [A]ll suppliers");
-    System.out.println("[2] Get supplier by [I]d");
-    System.out.println("[3] Get suppliers by [N]ame");
-    System.out.println("[4] Get suppliers by [L]ocation");
-
-    switch (getChar()) {
-      case '1':
-      case 'a':
-        viewSuppliers(0, null, null);
-        break;
-      case '2':
-      case 'i': {
-        System.out.println("Enter supplier id");
-        int id = getInt();
-        if (id > 0)
-          viewSuppliers(id, null, null);
-        else {
-          String name;
-          String location;
-          System.out.println("Enter supplier name (or n/a to skip)");
-          name = getString();
-          if (name.equals("n/a")) {
-            name = "";
+    System.out.println("[2] [F]ilter suppliers");
+    System.out.println("[3] Return to previous [M]enu");
+    try {
+      switch (getChar()) {
+        case '1':
+        case 'a':
+          viewSuppliers(0, null, null);
+          break;
+        case '2':
+        case 'f': {
+          System.out.println("Enter supplier id");
+          int id = getInt();
+          if (id > 0)
+            viewSuppliers(id, null, null);
+          else {
+            String name;
+            String location;
+            System.out.println("Enter supplier name (or n/a to skip)");
+            name = getString();
+            if (name.equals("n/a")) {
+              name = "";
+            }
+            System.out.println("Enter supplier location (or n/a to skip)");
+            location = getString();
+            if (location.equals("n/a")) {
+              location = "";
+            }
+            viewSuppliers(0, name, location);
           }
-          System.out.println("Enter supplier location (or n/a to skip)");
-          location = getString();
-          if (location.equals("n/a")) {
-            location = "";
-          }
-          viewSuppliers(0, name, location);
         }
+          break;
+        case '3':
+        case 'm':
+          managerMenu();
+          break;
+        default:
+          System.out.println("Invalid choice");
+          break;
       }
-        break;
-      default:
-        System.out.println("Invalid choice");
-        getSupplierData();
-        break;
+    } catch (Exception e) {
+      System.out.println("Exception");
     }
+    getSupplierData();
   }
 
   private static char getChar() {
     System.out.print("> ");
     if (scanner.hasNext()) {
-      char[] choice = scanner.nextLine().toLowerCase().toCharArray();
+      char[] choice = scanner.next().toLowerCase().toCharArray();
+      scanner.nextLine();
       return choice[0];
     }
     return '\0';
   }
 
-  private static void viewShipments(String input) {
+  /**
+   * View shipments by destination, supplier, or product
+   * For suppliers, we only get shipments from that supplier
+   * 
+   * @param supplier_name The name of the supplier
+   * @return void
+   */
+  private static void viewShipments(String supplier_name) {
+    System.out.println("-------------------------");
+    System.out.println("[1] View shipments by [D]estination");
+    System.out.println("[2] View shipments by [S]upplier");
+    System.out.println("[3] [C]onfigure Shipments");
+    System.out.println("[4] [R]escind a Shipment");
+    System.out.println("[5] Return to [M]ain menu");
+    ArrayList<ShipmentData> shipments = new ArrayList<>();
+    try {
+      switch (getChar()) {
+        case '1':
+        case 'd': {// Get only the shipments by destination from supplier_name
+          System.out.println("Enter destination id (-1 to skip):");
+          int destination_id = getInt();
+          shipments = db.getShipmentsByDest(destination_id, supplier_name);
+        }
+          break;
+        case '2':
+        case 's': {
+          // If supplier_name is null, we can choose any supplier or skip
+          if (supplier_name == null || supplier_name.isEmpty()) {
+            System.out.println("Enter supplier name (n/a to skip):");
+            supplier_name = getString();
+            if (supplier_name.equals("n/a")) {
+              supplier_name = "";
+            }
+          }
+          System.out.println("Enter supplier id (-1 to skip):");
+          int supplier_id = getInt();
+          if (supplier_id == -1) {
+            shipments = db.getShipmentsBySupplier(-1, supplier_name);
+          } else {
+            // Check if the supplier_id matches the supplier name (if it exists)
+            SupplierData supplier = db.getSupplierById(supplier_id);
+            if (checkSupplier(supplier_name, supplier)) {
+              shipments = db.getShipmentsBySupplier(supplier_id, supplier_name);
+            } else {
+              System.out.println("Supplier id does not match supplier name");
+            }
+          }
+        }
+          break;
+        case '3':
+        case 'c':
+          configureShipment(supplier_name);
+          break;
+        case '4':
+        case 'r': {
+          // We can only cancel shipments by destination.
+          // Ask for shipment id first.
+          // so destination id must match supplier if supplier name is not empty
+          // else destination id must match store_id
+          if (supplier_name == null || supplier_name.isEmpty()) {
+            // A shipment to a store
 
+          } else {
+            // A shipment to a supplier
+
+          }
+        }
+          break;
+        case '5':
+        case 'm':
+          userMenu();
+          break;
+        default:
+          System.out.println("Invalid choice");
+          break;
+      }
+    } catch (Exception e) {
+      System.out.println("Exception");
+    }
+    if (shipments.size() > 0)
+      printShipments(shipments, false);
+    viewShipments(supplier_name);
+  }
+
+  /**
+   * Detailed shipments menu
+   * Create a shipment
+   * Add a product to a shipment
+   * Remove a product from a shipment
+   * Update a shipment
+   * 
+   * @param supplier_name
+   */
+  private static void configureShipment(String supplier_name) {
+    System.out.println("-------------------------");
+    System.out.println("[1] Create a new [S]hipment");
+    System.out.println("[2] [A]dd a Product to a shipment");
+    System.out.println("[3] [R]emove a Product from a shipment");
+    System.out.println("[4] [U]pdate a Shipment");
+    System.out.println("[5] Return to previous [M]enu");
+    try {
+      switch (getChar()) {
+        case '1':
+        case 's': {
+
+          System.out.println("Enter destination id:");
+          int destination_id = getInt();
+          // Get shipment date
+          String ship_date = createDate();
+          // Get arrival date
+          String arrive_date = createDate();
+          System.out.println("Enter supplier id:");
+          int supplier_id = getInt();
+          SupplierData supplier = db.getSupplierById(supplier_id);
+          if (checkSupplier(supplier_name, supplier)) {
+            db.addShipmentLog(destination_id, ship_date, arrive_date);
+          } else {
+            System.out.println("Supplier id does not match supplier name");
+          }
+        }
+          break;
+        case '2':
+        case 'a': {
+          System.out.println("Enter shipment id:");
+          int shipment_id = getInt();
+          System.out.println("Enter product id:");
+          int product_id = getInt();
+          System.out.println("Enter quantity:");
+          float quantity = getFloat(2);
+          System.out.println("Enter supplier id:");
+          int supplier_id = getInt();
+          SupplierData supplier = db.getSupplierById(supplier_id);
+          if (checkSupplier(supplier_name, supplier)) {
+            db.addProductToShipment(shipment_id, product_id, supplier_id, quantity);
+          } else {
+            System.out.println("Supplier id does not match supplier name");
+          }
+        }
+          break;
+        case '3':
+        case 'r': {
+          System.out.println("Enter shipment id:");
+          int shipment_id = getInt();
+          System.out.println("Enter product id:");
+          int product_id = getInt();
+          System.out.println("Enter supplier id:");
+          int supplier_id = getInt();
+          SupplierData supplier = db.getSupplierById(supplier_id);
+          if (checkSupplier(supplier_name, supplier)) {
+            db.deleteProductFromShipment(shipment_id, product_id, supplier_id);
+          } else {
+            System.out.println("Supplier id does not match supplier name");
+          }
+        }
+          break;
+        case '4':
+        case 'u': {
+          // update the shipment log given the shipment id.
+          // Can update destination, ship_date, arrive_date
+          // Supplier name must match the supplier_id
+          System.out.println("Enter shipment id:");
+          int shipment_id = getInt();
+          System.out.println("Enter destination id:");
+          int destination_id = getInt();
+          System.out.println("Enter ship date:");
+          String ship_date = getString();
+          System.out.println("Enter arrive date:");
+          String arrive_date = getString();
+          System.out.println("Enter supplier id:");
+          int supplier_id = getInt();
+          SupplierData supplier = db.getSupplierById(supplier_id);
+          if (checkSupplier(supplier_name, supplier)) {
+            db.updateShipmentLog(shipment_id, destination_id, ship_date, arrive_date, supplier_id);
+          } else {
+            System.out.println("Supplier id does not match supplier name");
+          }
+        }
+          break;
+        case '5':
+        case 'm':
+          viewShipments(supplier_name);
+          break;
+        default:
+          System.out.println("Invalid choice");
+          break;
+      }
+    } catch (Exception e) {
+      System.out.println("Exception");
+    }
+    configureShipment(supplier_name);
+  }
+
+  private static String createDate() {
+    // Ask for date in format yyyy-mm-dd. If not, use current date
+    // Loop until we have a valid date
+    boolean valid = false;
+    while (!valid) {
+      System.out.println("Enter ship date (yyyy-mm-dd) or n/a to skip:");
+      String date = getString();
+      // check for correct format
+      if (date.equals("n/a")) {
+        return java.time.LocalDateTime.now().toString();
+      } else if (date.matches("\\d{4}-\\d{2}-\\d{2}")) {
+        return date;
+      }
+      System.out.println("Invalid date format. Please enter in yyyy-mm-dd format.");
+    }
+    return java.time.LocalDateTime.now().toString();
+  }
+
+  private static float getFloat(int precision) {
+    float x = scanner.nextFloat();
+    // round to decimals
+    x = Math.round(x * Math.pow(10, precision)) / (float) Math.pow(10, precision);
+    scanner.nextLine();
+    return x;
+  }
+
+  private static void printShipments(ArrayList<ShipmentData> shipments, boolean isSimple) {
+    if (!isSimple) {
+      String format = "%-5s %-10s %-10s %-10s %-10s %-20s %-10s %-10s";
+      System.out
+          .println(
+              String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date", "Supplier ID", "Supplier Name",
+                  "Product ID",
+                  "Quantity"));
+      for (ShipmentData shipment : shipments) {
+        System.out.println(String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date,
+            shipment.supplier.supplier_id, shipment.product_id, shipment.quantity));
+      }
+    } else {
+      String format = "%-5s %-10s %-10s %-10s";
+      System.out.println(String.format(format, "ID", "Destination", "Ship Date", "Arrive Date"));
+      for (ShipmentData shipment : shipments) {
+        System.out.println(
+            String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date, shipment.arrive_date));
+      }
+    }
   }
 
   private static void viewProducts(String supplier_name) {
@@ -219,19 +460,19 @@ public class App {
         }
           break;
         case '3':
-        case 'i':
+        case 'i': {
           System.out.println("Enter product id (-1 to skip):");
           int id = getInt();
           if (id == -1) {
             products = db.getProductByName("", supplier_name);
-          }
-          if (supplier_name == null || supplier_name.isEmpty()) {
+          } else if (supplier_name == null || supplier_name.isEmpty()) {
             // If null, we can get all the products from any supplier
             products = db.getProductByProductId(id, null);
           } else {
             // else, we only get it from the supplier name
             products = db.getProductByProductId(id, supplier_name);
           }
+        }
           break;
         case '4':
         case 's':
@@ -239,8 +480,7 @@ public class App {
           int supplier_id = getInt();
           if (supplier_id == -1) {
             products = db.getProductByName("", supplier_name);
-          }
-          if (supplier_name == null) {
+          } else if (supplier_name == null) {
             // If null, we can get all the products from that one supplier
             products = db.getProductBySupplierId(supplier_id);
           } else {
@@ -261,7 +501,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception: Invalid choice");
+      System.out.println("Exception");
     }
     if (products.size() > 0)
       printProducts(products, false);
@@ -351,7 +591,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception: Invalid choice");
+      System.out.println("Exception");
     } finally {
       manageStoreLocations();
     }
@@ -397,9 +637,8 @@ public class App {
     System.out.println("[2] View/Manage my [P]roducts");
     System.out.println("[3] View/Manage my [S]hipments");
     System.out.println("[4] View/Manage/Recall my Manufacturing [C]omponents");
-    System.out.println("[5] Return to Supplier [M]enu");
+    System.out.println("[5] Return to [M]ain Menu");
     try {
-
       switch (getChar()) {
         case '1':
         case 'l':
@@ -423,10 +662,10 @@ public class App {
           break;
         default:
           System.out.println("Invalid choice");
-          supplierMenu(supplier_name);
+          break;
       }
     } catch (Exception e) {
-      System.out.println("Exeption: Invalid choice");
+      System.out.println("Exception");
     }
     supplierMenu(supplier_name);
   }
@@ -500,7 +739,7 @@ public class App {
             product_id = db.addProductLog(product_name);
           }
           System.out.println("Enter price:");
-          float price = scanner.nextFloat();
+          float price = getFloat(2);
           scanner.nextLine();
           System.out.println("Enter unit type:");
           String unit_type = getString();
@@ -534,7 +773,7 @@ public class App {
         SupplierData supplier = db.getSupplierById(supplier_id);
         if (checkSupplier(supplier_name, supplier)) {
           System.out.println("Enter new price:");
-          float price = scanner.nextFloat();
+          float price = getFloat(2);
           scanner.nextLine();
           System.out.println("Enter new unit type:");
           String unit_type = getString();
@@ -572,8 +811,9 @@ public class App {
     try {
       switch (getChar()) {
         case '1':
-        case 'l':
+        case 'l': {
           viewSuppliers(0, supplier_name, "");
+        }
           break;
         case '2':
         case 'a': {
@@ -616,7 +856,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception: Invalid choice");
+      System.out.println("Exception");
     }
     manageSupplier(supplier_name);
   }
@@ -650,6 +890,7 @@ public class App {
     table.add("shipment");
     table.add("manufacturing");
     table.add("building");
+    table.add("product_ship");
     return table;
   }
 }

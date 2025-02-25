@@ -9,6 +9,11 @@ import java.util.ArrayList;
 
 public class Database {
   private Connection dbConnection;
+
+  private PreparedStatement addBuilding;
+  private PreparedStatement updateBuilding;
+  private PreparedStatement deleteBuilding;
+
   private PreparedStatement selectAllStores;
   private PreparedStatement selectStoreById;
   private PreparedStatement selectStorebyLocation;
@@ -31,7 +36,6 @@ public class Database {
   private PreparedStatement selectAllProductsByNames;
   private PreparedStatement selectAllProductsByProductId;
   private PreparedStatement selectAllProductsBySupplierId;
-
   private PreparedStatement selectOneProduct;
 
   private PreparedStatement addProductLog;
@@ -39,9 +43,17 @@ public class Database {
   private PreparedStatement updateProduct;
   private PreparedStatement deleteProduct;
 
-  private PreparedStatement addBuilding;
-  private PreparedStatement updateBuilding;
-  private PreparedStatement deleteBuilding;
+  private PreparedStatement selectAllShipmentByDest;
+  private PreparedStatement selectAllShipmentFromSupplierId;
+  private PreparedStatement selectAllShipmentFromSupplierName;
+  private PreparedStatement selectShipmentIdsToSupplier;
+  private PreparedStatement addShipmentLogId;
+  private PreparedStatement updateShipmentLogDest;
+  private PreparedStatement deleteShipmentLogId;
+
+  private PreparedStatement selectProductsFromShipmentId;
+  private PreparedStatement addProducttoShipmentId;
+  private PreparedStatement deleteProductFromShipmentId;
 
   private Database() {
   }
@@ -129,6 +141,7 @@ public class Database {
     String shipment = dbTable.get(3);
     String manufacturing = dbTable.get(4);
     String building = dbTable.get(5);
+    String product_ship = dbTable.get(6);
     try {
       // CRUD operations for building
       db.addBuilding = db.dbConnection
@@ -205,6 +218,50 @@ public class Database {
           .prepareStatement(
               String.format("DELETE FROM %1$s WHERE %1$s_id = ? AND %2$s_id = ?", product, supplier));
       // CRUD operations for shipment
+      db.selectAllShipmentByDest = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$slog WHERE to_id = ? AND %1$s_id IN (" +
+                  "SELECT %1$s_id IN %1$s WHERE %2$s_name LIKE ?)",
+                  shipment, supplier));
+      db.selectAllShipmentFromSupplierName = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$slog WHERE %1$s_id IN (" +
+                  "SELECT %1$s_id IN %1$s WHERE %2$s_name LIKE ?)",
+                  shipment, supplier));
+      db.selectAllShipmentFromSupplierId = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$slog WHERE %1$s_id IN (SELECT %1$s_id FROM %1$s WHERE %2$s_id = ?)",
+                  shipment, supplier));
+      // select shipment ids only from shipment to suppliers
+      db.selectShipmentIdsToSupplier = db.dbConnection
+          .prepareStatement(String.format(
+              "SELECT * FROM %1$slog WHERE to_id IN (SELECT %2$s_id FROM %2$s WHERE %2$s_name LIKE ?)",
+              shipment, supplier));
+      // select shipment ids only from shipment to stores
+      db.selectShipmentIdsToStore = db.dbConnection
+          .prepareStatement(String.format(
+              "SELECT * FROM %1$slog WHERE to_id IN (SELECT %2$s_id FROM %2$s)",
+              shipment, store));
+      db.addShipmentLogId = db.dbConnection
+          .prepareStatement(
+              String.format("INSERT INTO %1$slog (to_id, ship_date, arrive_date) VALUES (?,?,?)", shipment),
+              new String[] { "shipment_id" });
+      db.updateShipmentLogDest = db.dbConnection
+          .prepareStatement(String.format(
+              "UPDATE %1$slog SET to_id = ?, ship_date = ?, arrive_date = ? WHERE %1$s_id = ?" +
+                  "AND %1$s_id IN (SELECT %1$s_id FROM %1$s WHERE %2$s_id = ?)",
+              shipment, supplier));
+      db.deleteShipmentLogId = db.dbConnection
+          .prepareStatement(String.format("DELETE FROM %1$slog WHERE %1$s_id = ?", shipment));
+      // CRUD operations for product in shipment
+      db.selectProductsFromShipmentId = db.dbConnection
+          .prepareStatement(String.format("SELECT * FROM %1$s WHERE %1$s_id = ?", shipment));
+      db.addProducttoShipmentId = db.dbConnection
+          .prepareStatement(String.format("INSERT INTO %1$s (%2$s_id, %3$s_id, %4$s_id, qty) VALUES (?,?,?,?)",
+              product_ship, shipment, product, supplier));
+      db.deleteProductFromShipmentId = db.dbConnection
+          .prepareStatement(String.format("DELETE FROM %1$s WHERE %2$s_id = ? AND %3$s_id = ? AND %4$s_id = ?",
+              product_ship, shipment, product, supplier));
 
       // CRUD operations for manufacturing
 
@@ -590,7 +647,7 @@ public class Database {
     try {
       ResultSet rs = selectAllProductsLog.executeQuery();
       while (rs.next()) {
-        products.add(getProductSimple(rs));
+        products.add(getProductFromLog(rs));
       }
     } catch (SQLException e) {
       Log.error("Cannot get all products");
@@ -613,7 +670,7 @@ public class Database {
         rs = selectAllProductsLog.executeQuery();
       }
       while (rs.next()) {
-        products.add(getProductSimple(rs));
+        products.add(getProductFromLog(rs));
       }
     } catch (SQLException e) {
       Log.error("Cannot get all products");
@@ -638,7 +695,7 @@ public class Database {
     return null;
   }
 
-  private ProductData getProductSimple(ResultSet rs) {
+  private ProductData getProductFromLog(ResultSet rs) {
     try {
       String product_name = rs.getString("product_name");
       int product_id = rs.getInt("product_id");
@@ -765,5 +822,173 @@ public class Database {
       Log.error("Cannot update product");
     }
     return count;
+  }
+
+  ArrayList<ShipmentData> getShipmentsByDest(int to_id, String supplier_name) {
+    ArrayList<ShipmentData> shipments = new ArrayList<>();
+    try {
+      selectAllShipmentByDest.setInt(1, to_id);
+      selectAllShipmentByDest.setString(2, adjustWildcards(supplier_name));
+      ResultSet rs = selectAllShipmentByDest.executeQuery();
+      while (rs.next()) {
+        shipments.add(getShipmentLog(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all shipments with destination: " + to_id);
+    }
+    return shipments;
+  }
+
+  ArrayList<ShipmentData> getShipmentsBySupplier(int supplier_id, String supplier_name) {
+    ArrayList<ShipmentData> shipments = new ArrayList<>();
+    try {
+      ResultSet rs;
+      // Only supplier name is given
+      if (supplier_id > 0 && supplier_name != null) {
+        selectAllShipmentFromSupplierName.setString(1, adjustWildcards(supplier_name));
+        rs = selectAllShipmentFromSupplierName.executeQuery();
+      } else { // Get the entire log
+        selectAllShipmentFromSupplierId.setInt(1, supplier_id);
+        rs = selectAllShipmentFromSupplierId.executeQuery();
+      }
+      while (rs.next()) {
+        shipments.add(getShipmentLog(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all shipments with supplier: " + supplier_id);
+    }
+    return shipments;
+  }
+
+  ArrayList<ShipmentData> getShipmentToSupplier(String supplier_name) {
+    ArrayList<ShipmentData> shipments = new ArrayList<>();
+    try {
+      selectShipmentIdsToSupplier.setString(1, adjustWildcards(supplier_name));
+      ResultSet rs = selectShipmentIdsToSupplier.executeQuery();
+      while (rs.next()) {
+        shipments.add(getShipmentLog(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all shipments with destination: store");
+    }
+    return shipments;
+  }
+
+  int addShipmentLog(int to_id, String ship_date, String arrive_date) {
+    int shipment_id = -1;
+    try {
+      addShipmentLogId.setInt(1, to_id);
+      addShipmentLogId.setString(2, ship_date);
+      addShipmentLogId.setString(3, arrive_date);
+      int affectedRows = addShipmentLogId.executeUpdate();
+      if (affectedRows > 0) {
+        ResultSet rs = addShipmentLogId.getGeneratedKeys();
+        if (rs.next()) {
+          shipment_id = rs.getInt(1);
+        }
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot add shipment log");
+    }
+    return shipment_id;
+  }
+
+  int updateShipmentLog(int shipment_id, int to_id, String ship_date, String arrive_date, int supplier_id) {
+    int count = -1;
+    try {
+      updateShipmentLogDest.setInt(1, to_id);
+
+      updateShipmentLogDest.setString(2, ship_date);
+      updateShipmentLogDest.setString(3, arrive_date);
+      updateShipmentLogDest.setInt(4, shipment_id);
+      updateShipmentLogDest.setInt(5, supplier_id);
+      count = updateShipmentLogDest.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot update shipment log");
+    }
+    return count;
+  }
+
+  int deleteShipmentLog(int shipment_id) {
+    int count = -1;
+    try {
+      deleteShipmentLogId.setInt(1, shipment_id);
+      count = deleteShipmentLogId.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot delete shipment log");
+    }
+    return count;
+  }
+
+  ArrayList<ShipmentData> getProductsFromShipmentId(int shipment_id) {
+    ArrayList<ShipmentData> shipments = new ArrayList<>();
+    try {
+      selectProductsFromShipmentId.setInt(1, shipment_id);
+      ResultSet rs = selectProductsFromShipmentId.executeQuery();
+      while (rs.next()) {
+        shipments.add(getShipment(rs));
+      }
+    } catch (SQLException e) {
+      Log.error("Cannot get all shipments with destination: " + shipment_id);
+    }
+    return shipments;
+  }
+
+  int addProductToShipment(int shipment_id, int product_id, int supplier_id, float quantity) {
+    int count = 0;
+    try {
+      addProducttoShipmentId.setInt(1, shipment_id);
+      addProducttoShipmentId.setInt(2, product_id);
+      addProducttoShipmentId.setInt(3, supplier_id);
+      addProducttoShipmentId.setFloat(4, quantity);
+      count = addProducttoShipmentId.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot add product to shipment");
+    }
+    return count;
+  }
+
+  int deleteProductFromShipment(int shipment_id, int product_id, int supplier_id) {
+    int count = 0;
+    try {
+      deleteProductFromShipmentId.setInt(1, shipment_id);
+      deleteProductFromShipmentId.setInt(2, product_id);
+      deleteProductFromShipmentId.setInt(3, supplier_id);
+      count = deleteProductFromShipmentId.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Cannot delete product from shipment");
+    }
+    return count;
+  }
+
+  private ShipmentData getShipment(ResultSet rs) {
+    try {
+      int shipment_id = rs.getInt("shipment_id");
+      int to_id = rs.getInt("to_id");
+      String ship_date = rs.getString("ship_date");
+      String arrive_date = rs.getString("arrive_date");
+      int supplier_id = rs.getInt("supplier_id");
+      String supplier_name = rs.getString("supplier_name");
+      SupplierData supplier = new SupplierData(supplier_id, supplier_name, "");
+      int product_id = rs.getInt("product_id");
+      int quantity = rs.getInt("quantity");
+      return new ShipmentData(shipment_id, to_id, ship_date, arrive_date, supplier, product_id, quantity);
+    } catch (SQLException e) {
+      Log.error("Cannot get shipment");
+    }
+    return null;
+  }
+
+  private ShipmentData getShipmentLog(ResultSet rs) {
+    try {
+      int shipment_id = rs.getInt("shipment_id");
+      int to_id = rs.getInt("to_id");
+      String ship_date = rs.getString("ship_date");
+      String arrive_date = rs.getString("arrive_date");
+      return new ShipmentData(shipment_id, to_id, ship_date, arrive_date);
+    } catch (SQLException e) {
+      Log.error("Cannot get shipment");
+    }
+    return null;
   }
 }

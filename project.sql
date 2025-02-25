@@ -69,29 +69,28 @@ CREATE VIEW product AS(
 );
 
 
--- Each shipment have one supplier and to one location at certain time
+-- Each shipment goes to one location at certain time
 -- Each of those shipment is assigned a unique id
 CREATE TABLE shipmentLog(
   shipment_id   number(5) GENERATED ALWAYS AS IDENTITY,
-  supplier_id   number(5),
   to_id         number(5),
   ship_date     timestamp NOT NULL,
+  arrive_date   timestamp NOT NULL, -- check arrival date is after ship date
   PRIMARY KEY (shipment_id),
   FOREIGN KEY (to_id) 
     REFERENCES building(id)
     ON DELETE CASCADE,
-  FOREIGN KEY (supplier_id) 
-    REFERENCES supplierb
-    ON DELETE CASCADE
+  CHECK (arrive_date > ship_date)
 );
--- Multiple products can be for a specfic shipment.
+-- Multiple products can be for a specfic shipment from any supplier
 CREATE TABLE product_ship(
   shipment_id number(5),
   product_id number(5),
+  supplier_id   number(5),
   qty           numeric(5,2) DEFAULT 0,
   PRIMARY KEY (shipment_id, product_id, qty),
-  FOREIGN KEY (product_id)
-    REFERENCES productLog
+  FOREIGN KEY (product_id, supplier_id)
+    REFERENCES productb
     ON DELETE CASCADE,
   FOREIGN KEY (shipment_id)
     REFERENCES shipmentLog
@@ -100,8 +99,10 @@ CREATE TABLE product_ship(
 -- shows the all products in shipment with the quantity, price and unit type
 -- and supplier 
 CREATE VIEW shipment AS(
-  SELECT * FROM product_ship p
-  NATURAL JOIN shipmentLog h
+  SELECT * FROM product_ship
+  NATURAL JOIN shipmentLog
+  NATURAL JOIN productb
+  NATURAL JOIN supplierb
 );
 
 -- the components require the product, the supplier,
@@ -150,3 +151,5 @@ SELECT * FROM supplier WHERE supplier_name LIKE '%Hello%' AND location like '%';
 SELECT * FROM productlog;
 SELECT * FROM product;
 INSERT INTO productlog (product_name) VALUES ('ABC');
+SELECT * FROM shipment
+ALTER TABLE shipmentLog ADD COLUMN arrivedate TIMESTAMP ;
