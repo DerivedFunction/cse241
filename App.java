@@ -71,7 +71,7 @@ public class App {
           System.out.println("Invalid choice");
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     }
     userMenu();
   }
@@ -172,7 +172,7 @@ public class App {
           System.out.println("Invalid choice");
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     }
     managerMenu();
   }
@@ -220,7 +220,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     }
     getSupplierData();
   }
@@ -261,17 +261,22 @@ public class App {
           // from the supplier name
           System.out.println("Enter shipment id:");
           int shipment_id = getInt();
+          if (shipment_id < 0) {
+            System.out.println("Invalid shipment id");
+            break;
+          }
           // Lets get all the shipments
           shipments = db.getShipmentsByDest(-1, supplier_name);
+          ArrayList<ShipmentData> data = new ArrayList<>();
           // Lets check if the shipment_id is in the list
           // If it is, we can get the products from that shipment
           for (ShipmentData shipment : shipments) {
             if (shipment.shipment_id == shipment_id) {
-              shipments = db.getProductsFromShipmentId(shipment_id);
+              data = db.getProductsFromShipmentId(shipment_id);
               break;
             }
           }
-          printShipments(shipments, false);
+          printShipments(data, false);
         }
           break;
         case '1':
@@ -351,7 +356,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     }
     viewShipments(supplier_name);
   }
@@ -441,9 +446,9 @@ public class App {
             System.out.println("Enter destination id:");
             int destination_id = getInt();
             System.out.println("Enter ship date:");
-            String ship_date = getString();
+            String ship_date = createDate();
             System.out.println("Enter arrive date:");
-            String arrive_date = getString();
+            String arrive_date = createDate();
             db.updateShipmentLog(shipment_id, destination_id, ship_date, arrive_date, supplier_id);
           }
         }
@@ -457,7 +462,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
       e.printStackTrace();
     }
     configureShipment(supplier_name);
@@ -498,32 +503,41 @@ public class App {
 
   private static void printShipments(ArrayList<ShipmentData> shipments, boolean isSimple) {
     if (shipments.size() == 0) {
-      System.out.println("No shipments found");
+      if (!isSimple) {
+        System.out.println("No products in shipment");
+      } else {
+        System.out.println("No shipments found");
+      }
       return;
     }
-    float total = 0;
-    if (!isSimple) {
-      String format = "%-5s %-10s %-20s %-20s %20s %-5s %20s %-5s %-10s %-10s %-10s";
-      System.out.println(
-          String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date",
-              "Supplier Name", "ID",
-              "Product Name", "ID", "Quantity", "Price", "UI"));
-      for (ShipmentData shipment : shipments) {
+    try {
+      float total = 0;
+      if (!isSimple) {
+        String format = "%-5s %-10s %-20s %-20s %20s %-5s %20s %-5s %-10s %-10s %-10s";
         System.out.println(
-            String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date, shipment.arrive_date,
-                shipment.supplier.supplier_name, shipment.supplier.supplier_id,
-                shipment.product.product_name, shipment.product.product_id, shipment.quantity, shipment.product.price,
-                shipment.product.unit_type));
-        total += shipment.quantity * shipment.product.price;
+            String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date",
+                "Supplier Name", "ID",
+                "Product Name", "ID", "Quantity", "Price", "UI"));
+        for (ShipmentData shipment : shipments) {
+          System.out.println(
+              String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date, shipment.arrive_date,
+                  shipment.supplier.supplier_name, shipment.supplier.supplier_id,
+                  shipment.product.product_name, shipment.product.product_id, shipment.quantity, shipment.product.price,
+                  shipment.product.unit_type));
+          total += shipment.quantity * shipment.product.price;
+        }
+        System.out.println("Total: $" + total);
+      } else {
+        String format = "%-5s %-10s %-20s %-20s";
+        System.out.println(String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date"));
+        for (ShipmentData shipment : shipments) {
+          System.out.println(
+              String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date, shipment.arrive_date));
+        }
       }
-      System.out.println("Total: $" + total);
-    } else {
-      String format = "%-5s %-10s %-20s %-20s";
-      System.out.println(String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date"));
-      for (ShipmentData shipment : shipments) {
-        System.out.println(
-            String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date, shipment.arrive_date));
-      }
+    } catch (Exception e) {
+      Log.printStackTrace(e);
+      System.out.println("Error with results");
     }
   }
 
@@ -594,7 +608,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     }
     printProducts(products, false);
     viewProducts(supplier_name);
@@ -690,7 +704,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     } finally {
       manageStoreLocations();
     }
@@ -772,7 +786,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     }
     supplierMenu(supplier_name);
   }
@@ -981,7 +995,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     }
     manageSupplier(supplier_name);
   }
@@ -1130,7 +1144,7 @@ public class App {
           break;
       }
     } catch (Exception e) {
-      System.out.println("Exception");
+      Log.printStackTrace(e);
     }
     viewComponents(supplier_name);
   }

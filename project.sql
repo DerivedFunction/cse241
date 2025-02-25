@@ -159,6 +159,6 @@ SELECT * FROM product;
 INSERT INTO productlog (product_name) VALUES ('ABC');
 SELECT * FROM manufacturing;
 
--- Store 78
--- Supplier 1 (Hello, abc)
--- Product 2
+-- Store 108
+-- Supplier 5 (denny)
+-- Product 3 (apple)

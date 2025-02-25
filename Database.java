@@ -48,6 +48,7 @@ public class Database {
   private PreparedStatement selectAllShipmentByDest;
   private PreparedStatement selectAllShipmentFromSupplierId;
   private PreparedStatement selectAllShipmentFromSupplierName;
+  private PreparedStatement selectAllShipmentFromSupplierNameAndDest;
   private PreparedStatement selectShipmentIdsToStore;
   private PreparedStatement selectShipmentIdsToSupplier;
   private PreparedStatement addShipmentLogId;
@@ -241,6 +242,11 @@ public class Database {
           .prepareStatement(
               String.format("SELECT * FROM %1$slog WHERE %1$s_id IN (" +
                   "SELECT %1$s_id FROM %1$s WHERE %2$s_name LIKE ?) ORDER BY %1$s_id",
+                  shipment, supplier));
+      db.selectAllShipmentFromSupplierNameAndDest = db.dbConnection
+          .prepareStatement(
+              String.format("SELECT * FROM %1$slog WHERE %1$s_id IN (" +
+                  "SELECT %1$s_id FROM %1$s WHERE %2$s_name LIKE ?)  AND to_id = ? ORDER BY %1$s_id",
                   shipment, supplier));
       db.selectAllShipmentFromSupplierId = db.dbConnection
           .prepareStatement(
@@ -466,13 +472,16 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot add store");
     }
-    checkStatus(store_id);
+    checkStatus(store_id, true);
     return store_id;
   }
 
-  private void checkStatus(int count) {
+  private void checkStatus(int count, boolean showvValue) {
     if (count > 0) {
       System.out.println("Operation successful");
+      if (showvValue) {
+        System.out.println("ID: " + count);
+      }
     } else {
       System.out.println("Operation failed. Check for errors");
     }
@@ -493,7 +502,7 @@ public class Database {
       Log.error("Invalid SQL Exception: Cannot remove store: " + store_id);
 
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -514,7 +523,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot update store " + store_id + ": " + location);
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -538,7 +547,6 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot add building");
     }
-    checkStatus(id);
     return id;
   }
 
@@ -556,7 +564,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot remove building: " + id);
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -577,7 +585,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot update building " + id + ": " + location);
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -704,7 +712,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Invalid SQL Exception: Cannot add supplier");
     }
-    checkStatus(supplier_id);
+    checkStatus(supplier_id, true);
     return supplier_id;
   }
 
@@ -724,7 +732,7 @@ public class Database {
       Log.error("Invalid SQL Exception: Cannot remove supplier");
 
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -748,7 +756,7 @@ public class Database {
       Log.error("Invalid SQL Exception: Cannot update supplier " + supplier_id + ": " + location);
 
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -981,7 +989,7 @@ public class Database {
       Log.error("cannot add product.");
       Log.error(product_id + " " + supplier_id + " " + price + " " + unit_type);
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1007,7 +1015,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("cannot add product to log");
     }
-    checkStatus(product_id);
+    checkStatus(product_id, true);
     return product_id;
   }
 
@@ -1029,7 +1037,7 @@ public class Database {
       Log.error("Invalid SQL Exception: Cannot remove product: " + product_id + "from supplier: " + supplier_id);
 
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1054,7 +1062,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot update product");
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1073,6 +1081,10 @@ public class Database {
       if (to_id > 0 && isNull(supplier_name)) {
         selectAllShipmentByDest.setInt(1, to_id);
         rs = selectAllShipmentByDest.executeQuery();
+      } else if (to_id > 0 && !isNull(supplier_name)) { // We got both destination and supplier
+        selectAllShipmentFromSupplierNameAndDest.setString(1, supplier_name);
+        selectAllShipmentFromSupplierNameAndDest.setInt(2, to_id);
+        rs = selectAllShipmentFromSupplierNameAndDest.executeQuery();
       } else if (to_id < 0 && !isNull(supplier_name)) { // Only supplier name is given
         selectAllShipmentFromSupplierName.setString(1, adjustWildcards(supplier_name));
         rs = selectAllShipmentFromSupplierName.executeQuery();
@@ -1201,7 +1213,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot add shipment log");
     }
-    checkStatus(shipment_id);
+    checkStatus(shipment_id, true);
     return shipment_id;
   }
 
@@ -1228,7 +1240,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot update shipment log");
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1247,7 +1259,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot delete shipment log");
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1295,7 +1307,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot add product to shipment");
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1319,7 +1331,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot delete product from shipment");
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1514,7 +1526,7 @@ public class Database {
    * @return ManufacturingData
    */
   int addManufacturing(int product_id, int supplier_id, String component) {
-    int count = 0;
+    int m_id = 0;
     try {
       addManufacturing.setInt(1, product_id);
       addManufacturing.setInt(2, supplier_id);
@@ -1523,15 +1535,15 @@ public class Database {
       if (affectedRows > 0) {
         ResultSet rs = addManufacturing.getGeneratedKeys();
         if (rs.next()) {
-          count = rs.getInt(1);
+          m_id = rs.getInt(1);
         }
       }
     } catch (SQLException e) {
       Log.printStackTrace(e);
       Log.error("Cannot add manufacturing");
     }
-    checkStatus(count);
-    return count;
+    checkStatus(m_id, true);
+    return m_id;
   }
 
   /**
@@ -1551,7 +1563,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot update manufacturing");
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1574,7 +1586,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot delete manufacturing");
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1593,7 +1605,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot delete manufacturing");
     }
-    checkStatus(count);
+    checkStatus(count, false);
     return count;
   }
 
@@ -1613,8 +1625,7 @@ public class Database {
       String unit_type = rs.getString("unit_type");
       int supplier_id = rs.getInt("supplier_id");
       String supplier_name = rs.getString("supplier_name");
-      String loc = rs.getString("location");
-      SupplierData supplier = new SupplierData(supplier_id, supplier_name, loc);
+      SupplierData supplier = new SupplierData(supplier_id, supplier_name, "");
       ProductData product = new ProductData(supplier, product_id, product_name, price, unit_type);
       String component = rs.getString("component");
       m = new ManufacturingData(product, supplier, component, manufacturing_id);
@@ -1622,6 +1633,7 @@ public class Database {
       Log.printStackTrace(e);
       Log.error("Cannot get manufacturing");
     }
+    Log.info(m.toString());
     return m;
   }
 }
