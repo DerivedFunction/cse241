@@ -43,7 +43,7 @@ public class App {
 
   static void userMenu() {
     System.out.println("-------------------------");
-    System.out.println("[1] I am a store [M]anager");
+    System.out.println("[1] I am a Store [M]anager");
     System.out.println("[2] I am a [S]upplier");
     System.out.println("[3] [E]xit");
     try {
@@ -141,11 +141,12 @@ public class App {
 
   static void managerMenu() {
     System.out.println("-------------------------");
-    System.out.println("[1] View/Manage my store [L]ocations");
+    System.out.println("[1] View/Manage my Store [L]ocations");
     System.out.println("[2] View [S]uppliers");
     System.out.println("[3] View [P]roducts");
     System.out.println("[4] View/Manage my S[h]ipments");
-    System.out.println("[5] Return to [M]ain menu");
+    System.out.println("[5] View [C]omponents");
+    System.out.println("[6] Return to [M]ain menu");
     try {
       switch (getChar()) {
         case '1':
@@ -165,6 +166,10 @@ public class App {
           viewShipments(null);
           break;
         case '5':
+        case 'c':
+          viewComponents(null);
+          break;
+        case '6':
         case 'm':
           userMenu();
           break;
@@ -179,9 +184,9 @@ public class App {
 
   private static void getSupplierData() {
     System.out.println("-------------------------");
-    System.out.println("[1] Get [A]ll suppliers");
-    System.out.println("[2] [F]ilter suppliers");
-    System.out.println("[3] Return to previous [M]enu");
+    System.out.println("[1] Get [A]ll Suppliers");
+    System.out.println("[2] [F]ilter Suppliers");
+    System.out.println("[3] Return to Previous [M]enu");
     try {
       switch (getChar()) {
         case '1':
@@ -244,12 +249,12 @@ public class App {
    */
   private static void viewShipments(String supplier_name) {
     System.out.println("-------------------------");
-    System.out.println("[0] View shipment's products using Shipment [I]d");
-    System.out.println("[1] View shipments by [D]estination");
-    System.out.println("[2] View shipments by [S]upplier");
+    System.out.println("[0] View Shipment's products using Shipment [I]d");
+    System.out.println("[1] View Shipments by [D]estination");
+    System.out.println("[2] View Shipments by [S]upplier");
     System.out.println("[3] [C]onfigure Shipments");
     System.out.println("[4] [R]escind a Shipment");
-    System.out.println("[5] Return to [M]ain menu");
+    System.out.println("[5] Return to Previous [M]enu");
     Log.info(supplier_name);
     ArrayList<ShipmentData> shipments = new ArrayList<>();
     try {
@@ -349,7 +354,7 @@ public class App {
           break;
         case '5':
         case 'm':
-          userMenu();
+          goToMenu(supplier_name);
           break;
         default:
           System.out.println("Invalid choice");
@@ -373,11 +378,11 @@ public class App {
    */
   private static void configureShipment(String supplier_name) {
     System.out.println("-------------------------");
-    System.out.println("[1] Create a new [S]hipment");
-    System.out.println("[2] [A]dd a Product to a shipment");
-    System.out.println("[3] [R]emove a Product from a shipment");
+    System.out.println("[1] Create a New [S]hipment");
+    System.out.println("[2] [A]dd a Product to a Shipment");
+    System.out.println("[3] [R]emove a Product from a Shipment");
     System.out.println("[4] [U]pdate a Shipment");
-    System.out.println("[5] Return to previous [M]enu");
+    System.out.println("[5] Return to Previous [M]enu");
     try {
       switch (getChar()) {
         case '1':
@@ -543,10 +548,10 @@ public class App {
 
   private static void viewProducts(String supplier_name) {
     System.out.println("-------------------------");
-    System.out.println("[1] View all [P]roducts");
-    System.out.println("[2] View products by [N]ame");
-    System.out.println("[3] View products by Product [I]d");
-    System.out.println("[4] View products by [S]upplier Id");
+    System.out.println("[1] View All [P]roducts");
+    System.out.println("[2] View Products by [N]ame");
+    System.out.println("[3] View Products by Product [I]d");
+    System.out.println("[4] View Products by [S]upplier Id");
     System.out.println("[5] Return to [M]ain menu");
     ArrayList<ProductData> products = new ArrayList<>();
     try {
@@ -601,7 +606,7 @@ public class App {
           break;
         case '5':
         case 'm':
-          userMenu();
+          goToMenu(supplier_name);
           break;
         default:
           System.out.println("Invalid choice");
@@ -639,11 +644,11 @@ public class App {
 
   private static void manageStoreLocations() {
     System.out.println("-------------------------");
-    System.out.println("[1] View store [L]ocations");
-    System.out.println("[2] [A]dd store location");
-    System.out.println("[3] [R]emove store location");
-    System.out.println("[4] [U]pdate store location");
-    System.out.println("[5] Return to [m]ain menu");
+    System.out.println("[1] View Store [L]ocations");
+    System.out.println("[2] [A]dd Store location");
+    System.out.println("[3] [R]emove Store location");
+    System.out.println("[4] [U]pdate Store location");
+    System.out.println("[5] Return to Previous [M]enu");
     try {
 
       switch (getChar()) {
@@ -697,7 +702,7 @@ public class App {
           break;
         case '5':
         case 'm':
-          userMenu();
+          managerMenu();
           break;
         default:
           System.out.println("Invalid choice");
@@ -795,10 +800,10 @@ public class App {
     System.out.println("-------------------------");
     System.out.println("[1] View [P]roducts");
     System.out.println("[2] View Product Log");
-    System.out.println("[3] [A]dd a new product");
-    System.out.println("[4] [R]emove a product");
-    System.out.println("[5] [U]pdate a product");
-    System.out.println("[6] Return to [M]ain Menu");
+    System.out.println("[3] [A]dd a new Product");
+    System.out.println("[4] [R]emove a Product");
+    System.out.println("[5] [U]pdate a Product");
+    System.out.println("[6] Return to Previous [M]enu");
     switch (getChar()) {
       case '1':
       case 'p': {
@@ -910,7 +915,7 @@ public class App {
         break;
       case '6':
       case 'm':
-        userMenu();
+        goToMenu(supplier_name);
         break;
       default:
         System.out.println("Invalid choice");
@@ -943,7 +948,7 @@ public class App {
   private static void manageSupplier(String supplier_name) {
     System.out.println("-------------------------");
     System.out.println("[1] View my [L]ocations");
-    System.out.println("[2] [A]dd a new Location");
+    System.out.println("[2] [A]dd a New Location");
     System.out.println("[3] [R]emove a Location");
     System.out.println("[4] [U]pdate a Location");
     System.out.println("[5] Return to Supplier [M]enu");
@@ -1026,10 +1031,10 @@ public class App {
     System.out.println("[0] View Components by [N]ame");
     System.out.println("[1] View Components by [S]upplier");
     System.out.println("[2] View Components by [P]roduct");
-    System.out.println("[3] [A]dd a new Component");
+    System.out.println("[3] [A]dd a New Component");
     System.out.println("[4] [R]emove a Component");
     System.out.println("[5] [U]pdate a Component");
-    System.out.println("[6] Return to [M]ain Menu");
+    System.out.println("[6] Return to Previous [M]enu");
     try {
       switch (getChar()) {
         case '0':
@@ -1079,7 +1084,10 @@ public class App {
           break;
         case '3':
         case 'a': {
-
+          if (isStore(supplier_name)) {
+            System.out.println("Not a supplier. Cannot add component.");
+            break;
+          }
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
@@ -1094,6 +1102,10 @@ public class App {
           break;
         case '4':
         case 'r': {
+          if (isStore(supplier_name)) {
+            System.out.println("Not a supplier. Cannot add component.");
+            break;
+          }
           System.out.println("Enter manufacturer id (-1 to skip):");
           int m_id = getInt();
           if (m_id < 0) { // We skip the manufacturer id and use the other fields
@@ -1117,6 +1129,10 @@ public class App {
           break;
         case '5':
         case 'u': {
+          if (isStore(supplier_name)) {
+            System.out.println("Not a supplier. Cannot add component.");
+            break;
+          }
           System.out.println("Enter supplier id:");
           int supplier_id = getInt();
           SupplierData supplier = db.getSupplierById(supplier_id);
@@ -1137,7 +1153,7 @@ public class App {
           break;
         case '6':
         case 'm':
-          userMenu();
+          goToMenu(supplier_name);
           break;
         default:
           System.out.println("Invalid choice");
@@ -1147,6 +1163,14 @@ public class App {
       Log.printStackTrace(e);
     }
     viewComponents(supplier_name);
+  }
+
+  private static void goToMenu(String supplier_name) {
+    if (isStore(supplier_name)) {
+      managerMenu();
+    } else {
+      supplierMenu(supplier_name);
+    }
   }
 
   private static void printComponents(ArrayList<ManufacturingData> components) {
