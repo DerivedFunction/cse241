@@ -113,7 +113,7 @@ CREATE TABLE manufacturingb(
   product_id  number(5),
   supplier_id number(5),
   component   varchar(20) NOT NULL,
-  PRIMARY KEY(m_id),
+  PRIMARY KEY(manufacturing_id),
   FOREIGN KEY (product_id, supplier_id)
     REFERENCES productb(product_id, supplier_id)
     ON DELETE CASCADE
@@ -162,3 +162,5 @@ SELECT * FROM manufacturing;
 -- Store 108
 -- Supplier 5 (denny)
 -- Product 3 (apple)
+-- There are (Many/One) x to (One) y in Y
+-- There are (Many/One) y to (One) x in X

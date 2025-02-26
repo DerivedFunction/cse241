@@ -3,6 +3,7 @@
 ## Overview
 
 This document provides an overview of how data is stored in SQL for the cse241 project. The project involves a database schema that includes various entities such as buildings, stores, suppliers, products, shipments, and manufacturing processes.
+![ERD Diagram](./ERD.png)
 
 ## Database Schema
 
@@ -65,9 +66,10 @@ This document provides an overview of how data is stored in SQL for the cse241 p
 8. **Manufacturing** (`manufacturingb`)
    - **Description**: Represents the relationship between products and their components.
    - **Columns**:
-     - `product_id`: References the `product_id` from the product table (Primary Key, Foreign Key).
-     - `supplier_id`: References the `supplier_id` from the supplier table (Primary Key, Foreign Key).
-     - `component`: Name of the component used in manufacturing.
+     - `manufacturing_id`: Unique identifier for each component-supplier-product pair. This makes it easier to index each element. (Primary Key)
+     - `product_id`: References the `product_id` from the product table (Foreign Key).
+     - `supplier_id`: References the `supplier_id` from the supplier table (Foreign Key).
+     - `component`: Name of the component used in manufacturing. Cannot be null
 
 ### Views
 
@@ -92,10 +94,10 @@ This document provides an overview of how data is stored in SQL for the cse241 p
 
 ## Relationships
 
-- **Building** is the parent/general entity for both **Store** and **Supplier**, establishing a one-to-many relationship.
-- **Product** is linked to **Supplier** and **Product Log**, establishing a many-to-one relationship.
+- **Building** is the parent/general entity for both **Store** and **Supplier**.
+- **Product** is linked to **Supplier** and **Product Log**, establishing a many-to-many relationship, and many-to-one respectively.
 - **Shipment Log** is linked to **Building**, establishing a many-to-one relationship.
-- **Product Shipment** creates a many-to-many relationship between **Product** and **Shipment Log**.
+- **Product Shipment** is linked to **Product**, **Supplier**, and **Shipment Log** establishing a many to one relationship.
 - **Manufacturing** establishes a many-to-many relationship between **Product** and **Supplier** through components.
 
 This schema allows for efficient data retrieval and management, ensuring that all entities are properly linked and that data integrity is maintained throughout the database.
