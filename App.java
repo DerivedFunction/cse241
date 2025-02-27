@@ -213,7 +213,7 @@ public class App {
           break;
         case '2':
         case 'f': {
-          System.out.println("Enter supplier id");
+          System.out.println("Enter supplier id (-1 to skip)");
           int id = getInt();
           if (id > 0)
             viewSuppliers(id, null, null);
