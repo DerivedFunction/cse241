@@ -220,16 +220,10 @@ public class App {
           else {
             String name;
             String location;
-            System.out.println(" (or n/a to skip)");
-            name = getString();
-            if (name.equals("n/a")) {
-              name = "";
-            }
-            System.out.println("Enter supplier location (or n/a to skip)");
-            location = getString();
-            if (location.equals("n/a")) {
-              location = "";
-            }
+            System.out.println("Enter supplier name");
+            name = checkForNA();
+            System.out.println("Enter supplier location");
+            location = checkForNA();
             viewSuppliers(0, name, location);
           }
         }
@@ -246,6 +240,16 @@ public class App {
       Log.printStackTrace(e);
     }
     getSupplierData();
+  }
+
+  private static String checkForNA() {
+    System.out.println("(or n/a to skip)");
+    String name;
+    name = getString();
+    if (name.equals("n/a")) {
+      name = "";
+    }
+    return name;
   }
 
   /**
@@ -319,11 +323,8 @@ public class App {
           String temp_supplier_name = supplier_name;
           // If supplier_name is null, we can choose any supplier or skip
           if (isStore(supplier_name)) {
-            System.out.println("Enter supplier name (n/a to skip):");
-            temp_supplier_name = getString();
-            if (temp_supplier_name.equals("n/a")) {
-              temp_supplier_name = "";
-            }
+            System.out.println("Enter supplier name");
+            temp_supplier_name = checkForNA();
           }
           int supplier_id = checkSupplier(supplier_name, true);
           if (supplier_id == 0) {
@@ -495,7 +496,6 @@ public class App {
     while (!valid) {
       System.out.println("Enter date (YYYY-MM-DD HH:MI) or n/a to skip:");
       date = getString();
-      Log.info(date);
       // check for correct format
       if (date.equals("n/a")) {
         date = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
@@ -535,7 +535,7 @@ public class App {
     try {
       float total = 0;
       if (!isSimple) {
-        String format = "%-5s %-10s %-20s %-20s %20s %-5s %20s %-5s %-10s %-10s %-10s";
+        String format = "%-5s %-10s %-20s %-20s %20s %-5s %20s %-5s %10s %-10s %-10s";
         System.out.println(
             String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date",
                 "Supplier Name", "ID",
@@ -544,11 +544,12 @@ public class App {
           System.out.println(
               String.format(format, shipment.shipment_id, shipment.to_id, shipment.ship_date, shipment.arrive_date,
                   shipment.supplier.supplier_name, shipment.supplier.supplier_id,
-                  shipment.product.product_name, shipment.product.product_id, shipment.quantity, shipment.product.price,
+                  shipment.product.product_name, shipment.product.product_id, shipment.quantity,
+                  String.format("$%.2f", shipment.product.price),
                   shipment.product.unit_type));
           total += shipment.quantity * shipment.product.price;
         }
-        System.out.println("Total: $" + total);
+        System.out.println(String.format("Total: $%.2f", total));
       } else {
         String format = "%-5s %-10s %-20s %-20s";
         System.out.println(String.format(format, "ID", "Dest. ID", "Ship Date", "Arrive Date"));
@@ -586,11 +587,8 @@ public class App {
           break;
         case '2':
         case 'n': {
-          System.out.println("Enter product name (n/a to skip):");
-          String name = getString();
-          if (name.equals("n/a")) {
-            name = "";
-          }
+          System.out.println("Enter product name");
+          String name = checkForNA();
           products = db.getProductByName(name, supplier_name);
         }
           break;
@@ -876,13 +874,9 @@ public class App {
         System.out.println("Enter product id (-1 to enter product name instead):");
         int id = getInt();
         if (id < 0) { // We choose to use name instead of id
-          System.out.println("Enter product name (or n/a to skip):");
-          String name = getString();
-          if (name.equals("n/a")) { // We don't give a name
-            products = db.getProductLog(id, "");
-          } else { // We have a product_name
-            products = db.getProductLog(id, name);
-          }
+          System.out.println("Enter product name");
+          String name = checkForNA();
+          products = db.getProductLog(id, name);
         } else { // We have a product_id
           products = db.getProductLog(id, "");
         }
@@ -1128,11 +1122,8 @@ public class App {
       switch (getChar()) {
         case '0':
         case 'n': {
-          System.out.println("Enter component name (n/a to skip): ");
-          String component = getString();
-          if (component.equals("n/a")) {
-            component = "";
-          }
+          System.out.println("Enter component name");
+          String component = checkForNA();
           ArrayList<ManufacturingData> components = db.getManufacturingByComponent(component);
           printComponents(components);
         }
@@ -1141,11 +1132,8 @@ public class App {
         case 's': {
           String tempSupplierName = supplier_name;
           if (isStore(supplier_name)) {
-            System.out.println("Enter supplier name (n/a to skip):");
-            tempSupplierName = getString();
-            if (tempSupplierName.equals("n/a")) {
-              tempSupplierName = "";
-            }
+            System.out.println("Enter supplier name");
+            tempSupplierName = checkForNA();
           }
           int supplier_id = checkSupplier(tempSupplierName, true);
           if (supplier_id == 0) {
@@ -1195,11 +1183,8 @@ public class App {
             if (supplier_id > 0) {
               System.out.println("Enter product id:");
               int product_id = getInt();
-              System.out.println("Enter component (n/a to delete all components):");
-              String component = getString();
-              if (component.equals("n/a")) {
-                component = "";
-              }
+              System.out.println("Enter component");
+              String component = checkForNA();
               db.deleteManufacturing(product_id, supplier_id, component);
             }
           } else {
