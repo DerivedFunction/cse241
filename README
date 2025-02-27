@@ -2,8 +2,16 @@
 
 ## Overview
 
+By Denny Li
+
 This document provides an overview of how data is stored in SQL for the cse241 project. The project involves a database schema that includes various entities such as buildings, stores, suppliers, products, shipments, and manufacturing processes.
 ![ERD Diagram](./ERD.png)
+
+## How It Works
+
+1. Compile and run the program using `runLinux.sh` or `runWindows.sh`.
+2. When prompted, enter username and password to open to the interface.
+3. Choose between 2 user login options: as a store manager or as a supplier.
 
 ## Database Schema
 
@@ -73,29 +81,30 @@ This document provides an overview of how data is stored in SQL for the cse241 p
 
 ### Views
 
-1. **Store View**
+1. **`store` View**
 
    - Combines data from the `storeb` and `building` tables to provide a comprehensive view of stores, including their locations.
 
-2. **Supplier View**
+2. **`supplier` View**
 
    - Combines data from the `supplierb` and `building` tables to provide a comprehensive view of suppliers, including their locations.
 
-3. **Product View**
+3. **`product` View**
 
    - Combines data from the `productb`, `productlog`, and `supplierb` tables to provide a comprehensive view of products, their suppliers, and pricing.
 
-4. **Shipment View**
+4. **`shipment` View**
 
    - Combines data from the `product_ship`, `shipmentLog`, `productLog`, `productb`, and `supplierb` tables to provide a comprehensive view of shipments, including products, quantities, prices, and suppliers.
 
-5. **Manufacturing View**
+5. **`manufacturing` View**
    - Combines data from the `manufacturingb` and `product` tables to provide a comprehensive view of manufacturing processes.
 
 ## Relationships
 
 - **Building** is the parent/general entity for both **Store** and **Supplier**.
-- **Product** is linked to **Supplier** and **Product Log**, establishing a many-to-many relationship, and many-to-one respectively.
+- **Product** is linked to **Supplier** and **Product Log**, establishing a many-to-many relationship, and
+  many-to-one with total participation, respectively.
 - **Shipment Log** is linked to **Building**, establishing a many-to-one relationship.
 - **Product Shipment** is linked to **Product**, **Supplier**, and **Shipment Log** establishing a many to one relationship.
 - **Manufacturing** establishes a many-to-many relationship between **Product** and **Supplier** through components.
