@@ -3,6 +3,9 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.UUID;
 
+/**
+ * Main App function for user interface
+ */
 public class App {
   static Scanner scanner = new Scanner(System.in);
   static Database db;
@@ -41,6 +44,9 @@ public class App {
     userMenu();
   }
 
+  /**
+   * Initial Menu after logging in.
+   */
   static void userMenu() {
     System.out.println("-------------------------");
     System.out.println("[1] I am a Store [M]anager");
@@ -76,11 +82,17 @@ public class App {
     userMenu();
   }
 
+  /**
+   * Disconnects the database and gracefully exits
+   */
   private static void exitMenu() {
     System.out.println("Database disconnected.");
     System.exit(0);
   }
 
+  /**
+   * Generates random data and populates the SQL tables.
+   */
   private static void generateData() {
     System.out.println("Confirm data genration with (!random): ");
     String name = getString();
@@ -139,6 +151,9 @@ public class App {
     userMenu();
   }
 
+  /**
+   * Menu for store managers
+   */
   static void managerMenu() {
     System.out.println("-------------------------");
     System.out.println("[1] View/Manage my Store [L]ocations");
@@ -159,7 +174,7 @@ public class App {
           break;
         case '3':
         case 'p':
-          viewProducts("");
+          viewProducts(null);
           break;
         case '4':
         case 'h':
@@ -182,6 +197,9 @@ public class App {
     managerMenu();
   }
 
+  /**
+   * Viewing suppliers as a store manager
+   */
   private static void getSupplierData() {
     System.out.println("-------------------------");
     System.out.println("[1] Get [A]ll Suppliers");
@@ -230,6 +248,11 @@ public class App {
     getSupplierData();
   }
 
+  /**
+   * Gets one char (lowercase format)
+   * 
+   * @return the first character from user input
+   */
   private static char getChar() {
     System.out.print("> ");
     if (scanner.hasNext()) {
@@ -245,7 +268,6 @@ public class App {
    * For suppliers, we only get shipments from that supplier
    * 
    * @param supplier_name The name of the supplier
-   * @return void
    */
   private static void viewShipments(String supplier_name) {
     System.out.println("-------------------------");
@@ -303,21 +325,15 @@ public class App {
               temp_supplier_name = "";
             }
           }
-          System.out.println("Enter supplier id (-1 to skip):");
-          int supplier_id = getInt();
-          if (supplier_id == -1) {
+          int supplier_id = checkSupplier(supplier_name, true);
+          if (supplier_id == 0) {
             shipments = db.getShipmentsBySupplier(-1, temp_supplier_name);
+          } else if (supplier_id > 0) {
+            shipments = db.getShipmentsBySupplier(supplier_id, temp_supplier_name);
+            printShipments(shipments, true);
           } else {
-            // Check if the supplier_id matches the supplier name (if it exists)
-            SupplierData supplier = db.getSupplierById(supplier_id);
-            if (checkSupplier(supplier_name, supplier)) {
-              shipments = db.getShipmentsBySupplier(supplier_id, temp_supplier_name);
-              printShipments(shipments, true);
-            } else {
-              System.out.println("Supplier id does not match supplier name");
-            }
+            System.out.println("Supplier id does not match supplier name");
           }
-
         }
           break;
         case '3':
@@ -360,9 +376,12 @@ public class App {
           System.out.println("Invalid choice");
           break;
       }
-    } catch (Exception e) {
+    } catch (
+
+    Exception e) {
       Log.printStackTrace(e);
     }
+
     viewShipments(supplier_name);
   }
 
@@ -374,7 +393,6 @@ public class App {
    * Update a shipment
    * 
    * @param supplier_name The name of the supplier
-   * @return void
    */
   private static void configureShipment(String supplier_name) {
     System.out.println("-------------------------");
@@ -387,11 +405,8 @@ public class App {
       switch (getChar()) {
         case '1':
         case 's': {
-
-          System.out.println("Enter supplier id:");
-          int supplier_id = getInt();
-          SupplierData supplier = db.getSupplierById(supplier_id);
-          if (checkSupplier(supplier_name, supplier)) {
+          int supplier_id = checkSupplier(supplier_name, false);
+          if (supplier_id > 0) {
             System.out.println("Enter destination id:");
             int destination_id = getInt();
             // Get shipment date
@@ -406,11 +421,8 @@ public class App {
           break;
         case '2':
         case 'a': {
-
-          System.out.println("Enter supplier id:");
-          int supplier_id = getInt();
-          SupplierData supplier = db.getSupplierById(supplier_id);
-          if (checkSupplier(supplier_name, supplier)) {
+          int supplier_id = checkSupplier(supplier_name, false);
+          if (supplier_id > 0) {
             System.out.println("Enter shipment id:");
             int shipment_id = getInt();
             System.out.println("Enter product id:");
@@ -424,10 +436,8 @@ public class App {
         case '3':
         case 'r': {
 
-          System.out.println("Enter supplier id:");
-          int supplier_id = getInt();
-          SupplierData supplier = db.getSupplierById(supplier_id);
-          if (checkSupplier(supplier_name, supplier)) {
+          int supplier_id = checkSupplier(supplier_name, false);
+          if (supplier_id > 0) {
             System.out.println("Enter shipment id:");
             int shipment_id = getInt();
             System.out.println("Enter product id:");
@@ -442,10 +452,8 @@ public class App {
           // Can update destination, ship_date, arrive_date
           // Supplier name must match the supplier_id
 
-          System.out.println("Enter supplier id:");
-          int supplier_id = getInt();
-          SupplierData supplier = db.getSupplierById(supplier_id);
-          if (checkSupplier(supplier_name, supplier)) {
+          int supplier_id = checkSupplier(supplier_name, false);
+          if (supplier_id > 0) {
             System.out.println("Enter shipment id:");
             int shipment_id = getInt();
             System.out.println("Enter destination id:");
@@ -473,13 +481,19 @@ public class App {
     configureShipment(supplier_name);
   }
 
+  /**
+   * Ask for date in valid sql timestamp. If not, use current timestamp
+   * Loop until we have a valid timestamp (in 12hr format)
+   * yyyy-MM-dd HH:MI
+   * 
+   * @return timestamp String
+   */
   private static String createDate() {
-    // Ask for date in valid sql timestamp. If not, use current timestamp
-    // Loop until we have a valid timestamp (in 12hr format)
+
     boolean valid = false;
     String date = "2000-01-01 00:00";
     while (!valid) {
-      System.out.println("Enter date (yyyy-MM-dd HH:mm) or n/a to skip:");
+      System.out.println("Enter date (YYYY-MM-DD HH:MI) or n/a to skip:");
       date = getString();
       Log.info(date);
       // check for correct format
@@ -488,6 +502,8 @@ public class App {
         valid = true;
       } else if (date.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}")) {
         valid = true;
+      } else if (date.matches("\\d{4}-\\d{2}-\\d{2}")) {
+        date = date + " 00:00";
       } else {
         System.out.println("Invalid date format. Please enter in yyyy-MM-dd HH:mm format.");
         valid = false;
@@ -495,6 +511,7 @@ public class App {
     }
     Log.info(date);
     return date;
+
   }
 
   private static float getFloat(int precision) {
@@ -546,13 +563,19 @@ public class App {
     }
   }
 
+  /**
+   * Menu for viewing products
+   * Options to filter by id, name and supplier
+   * 
+   * @param supplier_name supplier name if it is a supplier
+   */
   private static void viewProducts(String supplier_name) {
     System.out.println("-------------------------");
     System.out.println("[1] View All [P]roducts");
     System.out.println("[2] View Products by [N]ame");
     System.out.println("[3] View Products by Product [I]d");
     System.out.println("[4] View Products by [S]upplier Id");
-    System.out.println("[5] Return to [M]ain menu");
+    System.out.println("[5] Return to Previous [m]enu");
     ArrayList<ProductData> products = new ArrayList<>();
     try {
       switch (getChar()) {
@@ -575,7 +598,7 @@ public class App {
         case 'i': {
           System.out.println("Enter product id (-1 to skip):");
           int id = getInt();
-          if (id == -1) {
+          if (id < 0) {
             products = db.getProductByName("", supplier_name);
           } else if (isStore(supplier_name)) {
             // If null, we can get all the products from any supplier
@@ -588,20 +611,16 @@ public class App {
           break;
         case '4':
         case 's':
-          System.out.println("Enter supplier id (-1 to skip):");
-          int supplier_id = getInt();
-          if (supplier_id == -1) {
+          int supplier_id = checkSupplier(supplier_name, true);
+          if (supplier_id == 0) {
             products = db.getProductByName("", supplier_name);
-          } else if (supplier_name == null) {
-            // If null, we can get all the products from that one supplier
+          } else if (isStore(supplier_name)) {
+            // If it is a store, we can get all the products from that one supplier
+            // For any supplier id
             products = db.getProductBySupplierId(supplier_id);
-          } else {
-            // else, we must verify that the supplier_id matches the supplier_name
-            SupplierData supplier = db.getSupplierById(supplier_id);
-            if (checkSupplier(supplier_name, supplier))
-              products = db.getProductBySupplierId(supplier_id);
-            else
-              System.out.println("Supplier id does not match supplier name");
+          } else if (supplier_id > 0) {
+            // Cannot view products from another supplier if they don't match
+            products = db.getProductBySupplierId(supplier_id);
           }
           break;
         case '5':
@@ -619,6 +638,12 @@ public class App {
     viewProducts(supplier_name);
   }
 
+  /**
+   * Pretty prints the data from products
+   * 
+   * @param products ArrayList of ProductData
+   * @param isSimple Prints only id and name if true
+   */
   private static void printProducts(ArrayList<ProductData> products, boolean isSimple) {
     if (products.size() == 0) {
       System.out.println("No Products found");
@@ -642,6 +667,9 @@ public class App {
     }
   }
 
+  /**
+   * Store Manager Menu for managing locations
+   */
   private static void manageStoreLocations() {
     System.out.println("-------------------------");
     System.out.println("[1] View Store [L]ocations");
@@ -656,11 +684,10 @@ public class App {
         case 'l': {
           ArrayList<StoreData> stores = new ArrayList<>();
           System.out.println("Select store id/location to view. Enter -1 to view all stores.");
-          System.out.print("> ");
           // Check if input is an int or string
           if (scanner.hasNextInt()) {
             int storeId = getInt();
-            if (storeId == -1) {
+            if (storeId < 0) {
               stores = db.getAllStores();
               printStores(stores);
             } else {
@@ -716,6 +743,11 @@ public class App {
 
   }
 
+  /**
+   * Gets string from user (lowercase only)
+   * 
+   * @return string
+   */
   private static String getString() {
     String input = scanner.nextLine();
     while (input == null || input.trim().isEmpty()) {
@@ -724,6 +756,11 @@ public class App {
     return input.toLowerCase();
   }
 
+  /**
+   * Gets integer from user input
+   * 
+   * @return integer
+   */
   private static int getInt() {
     while (!scanner.hasNextInt()) {
       System.out.println("Invalid input. Please enter an integer:");
@@ -733,6 +770,11 @@ public class App {
     return x;
   }
 
+  /**
+   * Pretty Prints the stores by id and location
+   * 
+   * @param stores ArrayList of StoreData
+   */
   private static void printStores(ArrayList<StoreData> stores) {
     if (stores.size() == 0) {
       System.out.println("No stores found");
@@ -745,6 +787,11 @@ public class App {
     }
   }
 
+  /**
+   * Pretty Prints the stores by id, name, and location
+   * 
+   * @param suppliers ArrayList of SupplierData
+   */
   private static void printSuppliers(ArrayList<SupplierData> suppliers) {
     if (suppliers.size() == 0) {
       System.out.println("No suppliers found");
@@ -757,6 +804,12 @@ public class App {
     }
   }
 
+  /**
+   * Supplier Menu. Once entered, all other menus are filtered
+   * for this name of supplier only.
+   * 
+   * @param supplier_name user inputted name for supplier
+   */
   static void supplierMenu(String supplier_name) {
     System.out.println("-------------------------");
     System.out.println("[1] View/Manage my [L]ocations");
@@ -796,6 +849,11 @@ public class App {
     supplierMenu(supplier_name);
   }
 
+  /**
+   * Allows suppliers to add, remove, update, or delete products
+   * 
+   * @param supplier_name supplier name
+   */
   private static void productMenu(String supplier_name) {
     System.out.println("-------------------------");
     System.out.println("[1] View [P]roducts");
@@ -817,7 +875,7 @@ public class App {
         ArrayList<ProductData> products = new ArrayList<>();
         System.out.println("Enter product id (-1 to enter product name instead):");
         int id = getInt();
-        if (id == -1) { // We choose to use name instead of id
+        if (id < 0) { // We choose to use name instead of id
           System.out.println("Enter product name (or n/a to skip):");
           String name = getString();
           if (name.equals("n/a")) { // We don't give a name
@@ -834,10 +892,8 @@ public class App {
       case '3':
       case 'a': {
         // We need to get the supplier id first and check if it matches the name
-        System.out.println("Enter supplier id:");
-        int supplier_id = getInt();
-        SupplierData supplier = db.getSupplierById(supplier_id);
-        if (checkSupplier(supplier_name, supplier)) { // Check if the supplier_id matches the name
+        int supplier_id = checkSupplier(supplier_name, false);
+        if (supplier_id > 0) { // Check if the supplier_id matches the name
           System.out.println("Enter product name:");
           String product_name = getString();
           int product_id;
@@ -849,7 +905,7 @@ public class App {
             System.out
                 .println("Product already exists. Enter product id to use, or -1 to create a new one.");
             product_id = getInt();
-            if (product_id == -1) { // Create a new product
+            if (product_id < 0) { // Create a new product
               product_id = db.addProductLog(product_name);
             } else {
               // Change the product name to match the existing product given the id
@@ -870,33 +926,24 @@ public class App {
           System.out.println("Enter unit type:");
           String unit_type = getString();
           db.addProductFromSupplier(product_id, supplier_id, price, unit_type);
-        } else {
-          System.out.println("Supplier id does not match supplier name");
         }
-
       }
         break;
       case '4':
       case 'r': {
 
-        System.out.println("Enter supplier id:");
-        int supplier_id = getInt();
-        SupplierData supplier = db.getSupplierById(supplier_id);
-        if (checkSupplier(supplier_name, supplier)) {
+        int supplier_id = checkSupplier(supplier_name, false);
+        if (supplier_id > 0) {
           System.out.println("Enter product id:");
           int product_id = getInt();
           db.deleteProduct(product_id, supplier_id);
-        } else {
-          System.out.println("Supplier id does not match supplier name");
         }
       }
         break;
       case '5':
       case 'u':
-        System.out.println("Enter supplier id:");
-        int supplier_id = getInt();
-        SupplierData supplier = db.getSupplierById(supplier_id);
-        if (checkSupplier(supplier_name, supplier)) {
+        int supplier_id = checkSupplier(supplier_name, false);
+        if (supplier_id > 0) {
           System.out.println("Enter product id:");
           int product_id = getInt();
           System.out.println("Enter new price:");
@@ -909,8 +956,6 @@ public class App {
           } catch (Exception e) {
             System.out.println("Invalid product id. Cannot update product.");
           }
-        } else {
-          System.out.println("Supplier id does not match supplier name");
         }
         break;
       case '6':
@@ -924,27 +969,58 @@ public class App {
     productMenu(supplier_name);
   }
 
-  private static boolean checkSupplier(String supplier_name, SupplierData supplier) {
+  /**
+   * Checks if the user input of supplier id matches the given supplier name
+   * A single supplier may have multiple locations, hence ids.
+   * 
+   * @param supplier_name name of supplier to reference
+   * 
+   * @return -1 if not found, 0 if skips, supplier_id if matches
+   */
+  private static int checkSupplier(String supplier_name, boolean skip) {
+    int supplier_id = -1;
+    if (skip) {
+      System.out.println("Enter supplier id (-1 to skip): ");
+      supplier_id = getInt();
+      if (supplier_id < 0) {
+        return 0;
+      }
+    } else {
+      System.out.println("Enter supplier id: ");
+      supplier_id = getInt();
+      if (supplier_id < 0) {
+        return -1;
+      }
+    }
+    SupplierData supplier = db.getSupplierById(supplier_id);
     if (supplier == null) {
       System.out.println("Supplier not found");
-      return false;
+      return -1;
     }
-    Log.info(supplier_name + " " + supplier.toString());
-    if (isStore(supplier_name)) {
-      return true;
-    }
-    if (supplier != null && supplier.supplier_name.contains(supplier_name)) {
-      return true;
+    if (supplier.supplier_name.contains(supplier_name)) {
+      return supplier_id;
     } else {
       System.out.println("Supplier id does not match supplier name");
-      return false;
+      return -1;
     }
   }
 
-  private static boolean isStore(String supplier_name) {
-    return supplier_name == null || supplier_name.isEmpty();
+  /**
+   * Menus use supplier_name to track suppliers
+   * Store managers will have this argument either null or empty
+   * 
+   * @param name the string to check
+   * @return true of null or empty
+   */
+  private static boolean isStore(String name) {
+    return name == null || name.isEmpty();
   }
 
+  /**
+   * Supplier menu to add, remove, or update locations
+   * 
+   * @param supplier_name supplier name
+   */
   private static void manageSupplier(String supplier_name) {
     System.out.println("-------------------------");
     System.out.println("[1] View my [L]ocations");
@@ -968,23 +1044,22 @@ public class App {
           break;
         case '3':
         case 'r': {
-          System.out.println(String.format("Enter supplier_id to remove for supplier[%s]:", supplier_name));
-          int id = getInt();
-          SupplierData supplier = db.getSupplierById(id);
-          if (checkSupplier(supplier_name, supplier))
-            db.removeSupplierById(id);
+          System.out.println(String.format("Supplier[%s], Removing location", supplier_name));
+          int supplier_id = checkSupplier(supplier_name, false);
+          if (supplier_id > 0)
+            db.removeSupplierById(supplier_id);
         }
           break;
         case '4':
         case 'u': {
           System.out.println(String.format("Enter supplier_id to update for supplier[%s]:", supplier_name));
-          int id = getInt();
-          SupplierData supplier = db.getSupplierById(id);
-          if (checkSupplier(supplier_name, supplier)) {
+          int supplier_id = checkSupplier(supplier_name, false);
+          if (supplier_id > 0) {
+            SupplierData supplier = db.getSupplierById(supplier_id);
             System.out.println("Current location: " + supplier.location);
             System.out.println("Enter new location: ");
             String location = getString();
-            int count = db.updateSupplier(id, supplier.supplier_name, location);
+            int count = db.updateSupplier(supplier_id, supplier.supplier_name, location);
             if (count < 1) {
               System.out.println("Failed to update product location");
             }
@@ -1005,6 +1080,15 @@ public class App {
     manageSupplier(supplier_name);
   }
 
+  /**
+   * Queries suppliers based on filters
+   * Queries by id if supplier_id > 0, will locate the specific supplier
+   * Else use the name and location
+   * 
+   * @param supplier_id   id
+   * @param supplier_name name. Can be null
+   * @param location      lcocation. Can be null
+   */
   private static void viewSuppliers(int supplier_id, String supplier_name, String location) {
     ArrayList<SupplierData> suppliers = new ArrayList<>();
     if (supplier_id > 0) {
@@ -1026,6 +1110,11 @@ public class App {
     }
   }
 
+  /**
+   * manage or view the components in each product
+   * 
+   * @param supplier_name supplier name
+   */
   private static void viewComponents(String supplier_name) {
     System.out.println("-------------------------");
     System.out.println("[0] View Components by [N]ame");
@@ -1058,21 +1147,16 @@ public class App {
               tempSupplierName = "";
             }
           }
-          System.out.println("Enter supplier id (-1 to skip):");
-          int supplier_id = getInt();
-          if (supplier_id == -1) {
+          int supplier_id = checkSupplier(tempSupplierName, true);
+          if (supplier_id == 0) {
             ArrayList<ManufacturingData> components = db.getManufacturingBySupplierName(tempSupplierName);
             printComponents(components);
-          } else {
-            SupplierData supplier = db.getSupplierById(supplier_id);
-            if (checkSupplier(tempSupplierName, supplier)) {
-              ArrayList<ManufacturingData> components = db.getManufacturingBySupplierId(supplier_id);
-              printComponents(components);
-            } else {
-              System.out.println("Supplier id does not match supplier name");
-            }
+          } else if (supplier_id > 0) {
+            ArrayList<ManufacturingData> components = db.getManufacturingBySupplierId(supplier_id);
+            printComponents(components);
           }
         }
+
           break;
         case '2':
         case 'p': {
@@ -1088,10 +1172,8 @@ public class App {
             System.out.println("Not a supplier. Cannot add component.");
             break;
           }
-          System.out.println("Enter supplier id:");
-          int supplier_id = getInt();
-          SupplierData supplier = db.getSupplierById(supplier_id);
-          if (checkSupplier(supplier_name, supplier)) {
+          int supplier_id = checkSupplier(supplier_name, false);
+          if (supplier_id > 0) {
             System.out.println("Enter product id:");
             int product_id = getInt();
             System.out.println("Enter Component:");
@@ -1109,10 +1191,8 @@ public class App {
           System.out.println("Enter manufacturer id (-1 to skip):");
           int m_id = getInt();
           if (m_id < 0) { // We skip the manufacturer id and use the other fields
-            System.out.println("Enter supplier id:");
-            int supplier_id = getInt();
-            SupplierData supplier = db.getSupplierById(supplier_id);
-            if (checkSupplier(supplier_name, supplier)) {
+            int supplier_id = checkSupplier(supplier_name, false);
+            if (supplier_id > 0) {
               System.out.println("Enter product id:");
               int product_id = getInt();
               System.out.println("Enter component (n/a to delete all components):");
@@ -1133,10 +1213,8 @@ public class App {
             System.out.println("Not a supplier. Cannot add component.");
             break;
           }
-          System.out.println("Enter supplier id:");
-          int supplier_id = getInt();
-          SupplierData supplier = db.getSupplierById(supplier_id);
-          if (checkSupplier(supplier_name, supplier)) {
+          int supplier_id = checkSupplier(supplier_name, false);
+          if (supplier_id > 0) {
             System.out.println("Enter component id:");
             int m_id = getInt();
             ManufacturingData old = db.getOneManufacturing(m_id);
@@ -1159,12 +1237,20 @@ public class App {
           System.out.println("Invalid choice");
           break;
       }
-    } catch (Exception e) {
+    } catch (
+
+    Exception e) {
       Log.printStackTrace(e);
     }
+
     viewComponents(supplier_name);
   }
 
+  /**
+   * Returns to proper menu given context
+   * 
+   * @param supplier_name if null, it is a store
+   */
   private static void goToMenu(String supplier_name) {
     if (isStore(supplier_name)) {
       managerMenu();
@@ -1173,6 +1259,11 @@ public class App {
     }
   }
 
+  /**
+   * Pretty prints components by id, product, name, and supplier
+   * 
+   * @param components ArrayList of ManufacturingData
+   */
   private static void printComponents(ArrayList<ManufacturingData> components) {
     if (components.size() == 0) {
       System.out.println("No components found");
@@ -1189,6 +1280,11 @@ public class App {
 
   }
 
+  /**
+   * Initializes the table/view names
+   * 
+   * @return ArrayList of entity names
+   */
   private static ArrayList<String> InitalizeTable() {
     ArrayList<String> table = new ArrayList<>();
     table.add("store");
