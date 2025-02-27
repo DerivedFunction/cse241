@@ -82,12 +82,12 @@ CREATE TABLE shipmentLog(
   CHECK (arrive_date >= ship_date)
 );
 -- Multiple products can be for a specfic shipment from any supplier
+-- We do not need any primary keys
 CREATE TABLE product_ship(
   shipment_id number(5),
   product_id number(5),
   supplier_id   number(5),
   qty           numeric(10,4),
-  PRIMARY KEY (shipment_id, product_id, supplier_id, qty),
   FOREIGN KEY (product_id, supplier_id)
     REFERENCES productb
     ON DELETE CASCADE,
@@ -159,6 +159,7 @@ SELECT * FROM product;
 INSERT INTO productlog (product_name) VALUES ('ABC');
 SELECT * FROM manufacturing;
 
+ALTER TABLE product_ship DROP PRIMARY KEY;
 -- Store 108
 -- Supplier 5 (denny)
 -- Product 3 (apple)

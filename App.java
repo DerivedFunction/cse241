@@ -332,8 +332,6 @@ public class App {
           } else if (supplier_id > 0) {
             shipments = db.getShipmentsBySupplier(supplier_id, temp_supplier_name);
             printShipments(shipments, true);
-          } else {
-            System.out.println("Supplier id does not match supplier name");
           }
         }
           break;
@@ -416,7 +414,8 @@ public class App {
             // Get arrival date
             System.out.println("Enter arrival date:");
             String arrive_date = createDate();
-            db.addShipmentLog(destination_id, ship_date, arrive_date);
+            int shipment_id = db.addShipmentLog(destination_id, ship_date, arrive_date);
+            addProductShipment(supplier_id, shipment_id, supplier_name);
           }
         }
           break;
@@ -424,13 +423,7 @@ public class App {
         case 'a': {
           int supplier_id = checkSupplier(supplier_name, false);
           if (supplier_id > 0) {
-            System.out.println("Enter shipment id:");
-            int shipment_id = getInt();
-            System.out.println("Enter product id:");
-            int product_id = getInt();
-            System.out.println("Enter quantity:");
-            float quantity = getFloat(4);
-            db.addProductToShipment(shipment_id, product_id, supplier_id, quantity);
+            addProductShipment(supplier_id, -1, supplier_name);
           }
         }
           break;
@@ -483,6 +476,32 @@ public class App {
   }
 
   /**
+   * Bulk adding products to a certain shipment_id
+   * 
+   * @param supplier_id   The supplier id (loops until -1)
+   * @param shipment_id   The specfic shipment
+   * @param supplier_name The supplier name (checks for matching supplier_id)
+   */
+  private static void addProductShipment(int supplier_id, int shipment_id, String supplier_name) {
+    System.out.println("Bulk adding products to shipment.");
+    if (shipment_id < 0) {
+      System.out.println("Enter shipment id:");
+      shipment_id = getInt();
+    }
+    int count = 0;
+    while (supplier_id > 0) {
+      System.out.println("Enter product id:");
+      int product_id = getInt();
+      System.out.println("Enter quantity:");
+      float quantity = getFloat(4);
+      if (db.addProductToShipment(shipment_id, product_id, supplier_id, quantity) > 0)
+        count++;
+      supplier_id = checkSupplier(supplier_name, true);
+    }
+    System.out.println(String.format("%d products added", count));
+  }
+
+  /**
    * Ask for date in valid sql timestamp. If not, use current timestamp
    * Loop until we have a valid timestamp (in 12hr format)
    * yyyy-MM-dd HH:MI
@@ -504,6 +523,7 @@ public class App {
         valid = true;
       } else if (date.matches("\\d{4}-\\d{2}-\\d{2}")) {
         date = date + " 00:00";
+        valid = true;
       } else {
         System.out.println("Invalid date format. Please enter in yyyy-MM-dd HH:mm format.");
         valid = false;

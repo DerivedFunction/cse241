@@ -28,13 +28,13 @@ This document provides an overview of how data is stored in SQL for the cse241 p
 
    - **Description**: A specialized entity derived from the building entity.
    - **Columns**:
-     - `store_id`: References the `id` from the building table (Primary Key, Foreign Key).
+     - `store_id`: References the `id` from the `building` table (Primary Key, Foreign Key).
 
 3. **Supplier** (`supplierb`)
 
    - **Description**: Another specialized entity derived from the building entity, representing suppliers.
    - **Columns**:
-     - `supplier_id`: References the `id` from the building table (Primary Key, Foreign Key).
+     - `supplier_id`: References the `id` from the `building` table (Primary Key, Foreign Key).
      - `supplier_name`: Name of the supplier.
 
 4. **Product Log** (`productLog`)
@@ -48,17 +48,17 @@ This document provides an overview of how data is stored in SQL for the cse241 p
 
    - **Description**: Links products to suppliers and includes pricing information.
    - **Columns**:
-     - `product_id`: References the `product_id` from the product log (Primary Key, Foreign Key).
-     - `supplier_id`: References the `supplier_id` from the supplier table (Primary Key, Foreign Key).
+     - `product_id`: References the `product_id` from the `productLog` (Primary Key, Foreign Key).
+     - `supplier_id`: References the `supplier_id` from the `supplier` table (Primary Key, Foreign Key).
      - `price`: Price of the product.
-     - `unit_type`: Type of unit for the product (default is 'ea').
+     - `unit_type`: Type of unit for the product (default is `'ea'`).
 
 6. **Shipment Log** (`shipmentLog`)
 
    - **Description**: Records shipments to various locations.
    - **Columns**:
      - `shipment_id`: Unique identifier for each shipment (Primary Key).
-     - `to_id`: References the `id` from the building table (Foreign Key).
+     - `to_id`: References the `id` from the `building` table (Foreign Key).
      - `ship_date`: Date the shipment is sent.
      - `arrive_date`: Date the shipment arrives (must be after `ship_date`).
 
@@ -66,9 +66,9 @@ This document provides an overview of how data is stored in SQL for the cse241 p
 
    - **Description**: Links products to specific shipments.
    - **Columns**:
-     - `shipment_id`: References the `shipment_id` from the shipment log (Primary Key, Foreign Key).
-     - `product_id`: References the `product_id` from the product table (Primary Key, Foreign Key).
-     - `supplier_id`: References the `supplier_id` from the supplier table (Primary Key, Foreign Key).
+     - `shipment_id`: References the `shipment_id` from the `shipmentLog` (Foreign Key).
+     - `product_id`: References the `product_id` from the `productb` table (Foreign Key).
+     - `supplier_id`: References the `supplier_id` from the `productb` table (Foreign Key).
      - `qty`: Quantity of the product in the shipment.
 
 8. **Manufacturing** (`manufacturingb`)
