@@ -110,3 +110,270 @@ This document provides an overview of how data is stored in SQL for the cse241 p
 - **Manufacturing** establishes a many-to-many relationship between **Product** and **Supplier** through components.
 
 This schema allows for efficient data retrieval and management, ensuring that all entities are properly linked and that data integrity is maintained throughout the database.
+
+## Sample run
+
+### As a store manager
+
+```
+Enter your username: del226
+Enter your password:
+-------------------------
+[1] I am a Store [M]anager
+[2] I am a [S]upplier
+[3] [E]xit
+> 1
+-------------------------
+[1] View/Manage my Store [L]ocations
+[2] View [S]uppliers
+[3] View [P]roducts
+[4] View/Manage my S[h]ipments
+[5] View [C]omponents
+[6] Return to [M]ain menu
+> 1
+-------------------------
+[1] View Store [L]ocations
+[2] [A]dd Store location
+[3] [R]emove Store location
+[4] [U]pdate Store location
+[5] Return to Previous [M]enu
+> 1
+Select store id/location to view. Enter -1 to view all stores.
+108
+ID    Location
+108   bethlehem
+-------------------------
+[1] View Store [L]ocations
+[2] [A]dd Store location
+[3] [R]emove Store location
+[4] [U]pdate Store location
+[5] Return to Previous [M]enu
+> 5
+-------------------------
+[1] View/Manage my Store [L]ocations
+[2] View [S]uppliers
+[3] View [P]roducts
+[4] View/Manage my S[h]ipments
+[5] View [C]omponents
+[6] Return to [M]ain menu
+> 5
+-------------------------
+[0] View Components by [N]ame
+[1] View Components by [S]upplier
+[2] View Components by [P]roduct
+[3] [A]dd a New Component
+[4] [R]emove a Component
+[5] [U]pdate a Component
+[6] Return to Previous [M]enu
+> 0
+Enter component name
+(or n/a to skip)
+n/a
+ID            Product Name ID           Supplier Name ID    Component
+41            cbdd7ee5-f27 34          d7c14c35-9915- 93    001192b9-167
+50     cdf3f309-d645-41a9- 35          d7c14c35-9915- 93    044b00c1-ed41-482e-
+17             695c2fc9-8a 29             e3f6069c-a4 69    05a1fc32-436b
+6              14daa4e4-74 27             e3f6069c-a4 69    0a60de51-14b
+15          042a7817-8c53- 28             e3f6069c-a4 69    1041b7ed-1
+13          042a7817-8c53- 28             e3f6069c-a4 69    13731efd-9fe9-4b55-
+19             695c2fc9-8a 29             e3f6069c-a4 69    16bb3970-2727-4ad
+1               71a85d58-8 26             e3f6069c-a4 69    1983a130-b1ff
+12          042a7817-8c53- 28             e3f6069c-a4 69    1f3ae54b-5fe6-4
+27     65d677c5-a0d7-4ef1- 31          d7c14c35-9915- 93    2299a41e-b33
+22      bde12b3d-f207-4025 30             e3f6069c-a4 69    27de23ce-4cdc-483d-
+29     65d677c5-a0d7-4ef1- 31          d7c14c35-9915- 93    2b52af00-8
+30     65d677c5-a0d7-4ef1- 31          d7c14c35-9915- 93    2d3329d0-9
+38      930a5cf2-45cd-46ae 33          d7c14c35-9915- 93    30ad7312-da83-41
+35             4efade42-b4 32          d7c14c35-9915- 93    3ba27c48-e4
+43            cbdd7ee5-f27 34          d7c14c35-9915- 93    3c66b57d-82
+5               71a85d58-8 26             e3f6069c-a4 69    3f7240ac-2c
+36      930a5cf2-45cd-46ae 33          d7c14c35-9915- 93    43a5340f-0
+7              14daa4e4-74 27             e3f6069c-a4 69    5a90a35f-e23a-412
+10             14daa4e4-74 27             e3f6069c-a4 69    5e9ef32e-1200
+23      bde12b3d-f207-4025 30             e3f6069c-a4 69    690c2a09-1fe7-4370
+34             4efade42-b4 32          d7c14c35-9915- 93    6af5c6f0-9cae-4
+47     cdf3f309-d645-41a9- 35          d7c14c35-9915- 93    6bfd8fba-0e96-43a
+33             4efade42-b4 32          d7c14c35-9915- 93    78f6986a-2f0f-4b0
+45            cbdd7ee5-f27 34          d7c14c35-9915- 93    81cd2f65-348e-4215
+9              14daa4e4-74 27             e3f6069c-a4 69    86b0f777-30f
+48     cdf3f309-d645-41a9- 35          d7c14c35-9915- 93    8b934fed-c863-4665
+26     65d677c5-a0d7-4ef1- 31          d7c14c35-9915- 93    8c22a05e-4de8-
+20             695c2fc9-8a 29             e3f6069c-a4 69    8c4dfb7b-fe36-45
+8              14daa4e4-74 27             e3f6069c-a4 69    939065b7-27a1-432
+4               71a85d58-8 26             e3f6069c-a4 69    95371c53-779c-48
+16             695c2fc9-8a 29             e3f6069c-a4 69    96649cfb-31b8-
+2               71a85d58-8 26             e3f6069c-a4 69    96d9b242-a
+52                   apple 3                    denny 5     asdfasdfs
+25      bde12b3d-f207-4025 30             e3f6069c-a4 69    bc1b9180-acb5-46
+14          042a7817-8c53- 28             e3f6069c-a4 69    bc5ffd7e-2
+18             695c2fc9-8a 29             e3f6069c-a4 69    bd8815f7-813d-42e2-
+42            cbdd7ee5-f27 34          d7c14c35-9915- 93    bde38a57-e111-425f
+31             4efade42-b4 32          d7c14c35-9915- 93    c0e098b5-3d44-4
+21      bde12b3d-f207-4025 30             e3f6069c-a4 69    c36c152d-12b1-4
+32             4efade42-b4 32          d7c14c35-9915- 93    ceaca2bb-8
+37      930a5cf2-45cd-46ae 33          d7c14c35-9915- 93    d94156bd-804
+49     cdf3f309-d645-41a9- 35          d7c14c35-9915- 93    e70ebd54-974d-4cc
+24      bde12b3d-f207-4025 30             e3f6069c-a4 69    e9df6190-d
+40      930a5cf2-45cd-46ae 33          d7c14c35-9915- 93    ec125429-6ae2-4c0
+3               71a85d58-8 26             e3f6069c-a4 69    f5347ab2-bab6-4924-
+11          042a7817-8c53- 28             e3f6069c-a4 69    f8b77463-0d19-44
+39      930a5cf2-45cd-46ae 33          d7c14c35-9915- 93    f8c6d239-68aa-40f
+28     65d677c5-a0d7-4ef1- 31          d7c14c35-9915- 93    fa9f1d20-0a13-4b
+44            cbdd7ee5-f27 34          d7c14c35-9915- 93    fd09fd81-4372
+46     cdf3f309-d645-41a9- 35          d7c14c35-9915- 93    fff7a482-6abb
+-------------------------
+[0] View Components by [N]ame
+[1] View Components by [S]upplier
+[2] View Components by [P]roduct
+[3] [A]dd a New Component
+[4] [R]emove a Component
+[5] [U]pdate a Component
+[6] Return to Previous [M]enu
+> 6
+-------------------------
+[1] View/Manage my Store [L]ocations
+[2] View [S]uppliers
+[3] View [P]roducts
+[4] View/Manage my S[h]ipments
+[5] View [C]omponents
+[6] Return to [M]ain menu
+> 6
+-------------------------
+[1] I am a Store [M]anager
+[2] I am a [S]upplier
+[3] [E]xit
+> 3
+Database disconnected.
+```
+
+### As a supplier
+
+```
+Enter your username: del226
+Enter your password:
+-------------------------
+[1] I am a Store [M]anager
+[2] I am a [S]upplier
+[3] [E]xit
+> 2
+Enter supplier name:
+denny
+-------------------------
+[1] View/Manage my [L]ocations
+[2] View/Manage my [P]roducts
+[3] View/Manage my [S]hipments
+[4] View/Manage/Recall my Manufacturing [C]omponents
+[5] Return to [M]ain Menu
+> 1
+-------------------------
+[1] View my [L]ocations
+[2] [A]dd a New Location
+[3] [R]emove a Location
+[4] [U]pdate a Location
+[5] Return to Supplier [M]enu
+> 1
+ID    Name                 Location
+89    denny                hello
+6     denny                home
+5     denny                lehighu
+-------------------------
+[1] View my [L]ocations
+[2] [A]dd a New Location
+[3] [R]emove a Location
+[4] [U]pdate a Location
+[5] Return to Supplier [M]enu
+> 4
+Enter supplier_id to update for supplier[denny]:
+Enter supplier id:
+89
+Current location: hello
+Enter new location:
+new york
+Operation successful
+Operation successful
+-------------------------
+[1] View my [L]ocations
+[2] [A]dd a New Location
+[3] [R]emove a Location
+[4] [U]pdate a Location
+[5] Return to Supplier [M]enu
+> 5
+-------------------------
+[1] View/Manage my [L]ocations
+[2] View/Manage my [P]roducts
+[3] View/Manage my [S]hipments
+[4] View/Manage/Recall my Manufacturing [C]omponents
+[5] Return to [M]ain Menu
+> 3
+-------------------------
+[0] View Shipment's products using Shipment [I]d
+[1] View Shipments by [D]estination
+[2] View Shipments by [S]upplier
+[3] [C]onfigure Shipments
+[4] [R]escind a Shipment
+[5] Return to Previous [M]enu
+> 3
+-------------------------
+[1] Create a New [S]hipment
+[2] [A]dd a Product to a Shipment
+[3] [R]emove a Product from a Shipment
+[4] [U]pdate a Shipment
+[5] Return to Previous [M]enu
+> 1
+Enter supplier id:
+5
+Enter destination id:
+108
+Enter ship date:
+Enter date (YYYY-MM-DD HH:MI) or n/a to skip:
+n/a
+Enter arrival date:
+Enter date (YYYY-MM-DD HH:MI) or n/a to skip:
+2027-05-02
+Operation successful
+ID: 10
+Bulk adding products to shipment.
+Enter product id:
+3
+Enter quantity:
+12
+Operation successful
+Enter supplier id (-1 to skip):
+5
+Enter product id:
+0
+Enter quantity:
+15
+Operation failed. Check for errors
+Enter supplier id (-1 to skip):
+-1
+1 products added
+-------------------------
+[1] Create a New [S]hipment
+[2] [A]dd a Product to a Shipment
+[3] [R]emove a Product from a Shipment
+[4] [U]pdate a Shipment
+[5] Return to Previous [M]enu
+> 5
+-------------------------
+[0] View Shipment's products using Shipment [I]d
+[1] View Shipments by [D]estination
+[2] View Shipments by [S]upplier
+[3] [C]onfigure Shipments
+[4] [R]escind a Shipment
+[5] Return to Previous [M]enu
+> 5
+-------------------------
+[1] View/Manage my [L]ocations
+[2] View/Manage my [P]roducts
+[3] View/Manage my [S]hipments
+[4] View/Manage/Recall my Manufacturing [C]omponents
+[5] Return to [M]ain Menu
+> 5
+-------------------------
+[1] I am a Store [M]anager
+[2] I am a [S]upplier
+[3] [E]xit
+> 3
+Database disconnected.
+```
