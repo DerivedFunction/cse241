@@ -1,3 +1,5 @@
+package del226.cse241.project;
+
 import java.io.Console;
 import java.util.ArrayList;
 import java.util.Scanner;

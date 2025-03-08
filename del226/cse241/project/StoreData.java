@@ -1,3 +1,5 @@
+package del226.cse241.project;
+
 /**
  * StoreData.java lists the fields of the store table
  */
@@ -11,7 +13,7 @@ public class StoreData {
      * The store location
      */
     String location;
-    
+
     /**
      * Construct a RowData object by providing values for its fields
      * 

@@ -1,3 +1,5 @@
+package del226.cse241.project;
+
 public class ProductData {
     SupplierData supplier;
     int product_id;

@@ -1,3 +1,5 @@
+package del226.cse241.project;
+
 /**
  * ShipmentData.java lists the fields of the shipment table
  */

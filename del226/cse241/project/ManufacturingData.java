@@ -1,3 +1,5 @@
+package del226.cse241.project;
+
 public class ManufacturingData {
     int manufacturing_id;
     ProductData product;

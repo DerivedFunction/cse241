@@ -1,3 +1,5 @@
+package del226.cse241.project;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;

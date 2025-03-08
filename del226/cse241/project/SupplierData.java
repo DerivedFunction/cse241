@@ -1,3 +1,5 @@
+package del226.cse241.project;
+
 /**
  * SupplierData.java lists the fields of the supplier table
  */
